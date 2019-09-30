@@ -32,11 +32,11 @@ local function split(s, delimiter)
     return result;
 end
 
-local function decode_base64_pair(text) 
+local function decode_base64_pair(text)
     if not text then
         return nil
     end
-    local p = split(text, " ") 
+    local p = split(text, " ")
     if p[1] == nil or p[2] == nil or p[3] ~= nil then
         return nil
     end
@@ -58,7 +58,7 @@ local function decode_metadata(metadata)
       q = {}
       table.insert(q, metadata)
     end
-    for k, v in pairs(q) do
+    for _, v in pairs(q) do
         local p = decode_base64_pair(v)
 	if not p then
 	    return nil
@@ -71,13 +71,13 @@ end
 local function encode_metadata(mtable)
     local first = true
     local ret = ""
-    for key, val in pairs(mtable) do 
+    for key, val in pairs(mtable) do
         if not first then
              ret = ret .. ","
         else
              first = false
         end
-        ret = ret .. key .. " " .. ngx.encode_base64(val) 
+        ret = ret .. key .. " " .. ngx.encode_base64(val)
     end
     return ret
 end
@@ -113,7 +113,6 @@ function _M.process_request(self)
 
     local headers = ngx.req.get_headers()
     local method
-    local resource
 
     if headers["x-http-method-override"] then
         method = headers["x-http-method-override"]
@@ -121,7 +120,7 @@ function _M.process_request(self)
         method = ngx.req.get_method()
     end
 
-    self.method = method 
+    self.method = method
 
     if method == "OPTIONS" then
         ngx.header["Tus-Version"] = tus_version
@@ -151,21 +150,21 @@ function _M.process_request(self)
         local udefer = headers["upload-defer-length"]
 	local umeta = headers["upload-metadata"]
 	local metadata = nil
-	local newresource = nil
-	local rnd = nil
+	local newresource
+	local rnd
         if (udefer ~= nil and udefer ~= "1") or
           (not ulen and not udefer) or
           (ulen and udefer) then
             exit_status(ngx.HTTP_BAD_REQUEST)
             return
         end
-	if self.config["max_size"] > 0 and ulen and 
+	if self.config["max_size"] > 0 and ulen and
 	  ulen > self.config["max_size"] then
 	    exit_status(413) -- Request Entity Too Large
 	    return
 	end
 	if umeta and umeta ~= "" then
- 	    metadata = decode_metadata(umeta)
+            metadata = decode_metadata(umeta)
 	    if not metadata then
 	        exit_status(ngx.HTTP_BAD_REQUEST)
 		return
@@ -186,26 +185,26 @@ function _M.process_request(self)
 	end
 	local ret = sb:create(newresource, info)
 	if not ret then
-          ngx.log(ngx.ERR, "Unable to create resource: " .. newresource)
-	  exit_status(ngx.HTTP_INTERNAL_SERVER_ERROR)
-	  return
+            ngx.log(ngx.ERR, "Unable to create resource: " .. newresource)
+	    exit_status(ngx.HTTP_INTERNAL_SERVER_ERROR)
+	    return
 	else
-	  ngx.header["Location"] = self.config.resource_url_prefix .. "/" .. newresource
-	  if info["Upload-Expires"] then
-  	      ngx.header["Upload-Expires"] = info["Upload-Expires"]
-	  end
-	  if info["Upload-Defer-Length"] then
-	      ngx.header["Upload-Defer-Length"] = info["Upload-Defer-Length"]
-	  end
-          self.resource.name = newresource
-	  self.resource.state = "created"
-	  exit_status(ngx.HTTP_CREATED)
-	  return
+	    ngx.header["Location"] = self.config.resource_url_prefix .. "/" .. newresource
+	    if info["Upload-Expires"] then
+                ngx.header["Upload-Expires"] = info["Upload-Expires"]
+	    end
+	    if info["Upload-Defer-Length"] then
+	        ngx.header["Upload-Defer-Length"] = info["Upload-Defer-Length"]
+	    end
+            self.resource.name = newresource
+	    self.resource.state = "created"
+	    exit_status(ngx.HTTP_CREATED)
+	    return
 	end
     end
 
     -- At the moment we support only hex resources
-    local resource = string.match(ngx.var.uri,"^.*/([0-9a-f]+)$") 
+    local resource = string.match(ngx.var.uri,"^.*/([0-9a-f]+)$")
     if not resource then
         exit_status(ngx.HTTP_NOT_FOUND)
         return
@@ -217,7 +216,7 @@ function _M.process_request(self)
     if not self.resource.info or not self.resource.info["Upload-Offset"] then
        exit_status(ngx.HTTP_NOT_FOUND)
        return
-    end 
+    end
 
     if self.resource.info["Upload-Offset"] == 0 then
         self.resource.state = "empty"
@@ -243,7 +242,7 @@ function _M.process_request(self)
             ngx.header["Upload-Defer-Length"] = "1"
         end
         if self.resource.info["Upload-Length"] then
-            ngx.header["Upload-Length"] = self.resource.info["Upload-Length"] 
+            ngx.header["Upload-Length"] = self.resource.info["Upload-Length"]
         end
         if self.resource.info["Upload-Metadata"] then
             local metadata = encode_metadata(self.resource.info["Upload-Metadata"])
@@ -270,7 +269,7 @@ function _M.process_request(self)
     end
 
     if method == "PATCH" then
-    	if headers["content-type"] ~= "application/offset+octet-stream" then
+        if headers["content-type"] ~= "application/offset+octet-stream" then
 	    exit_status(415) -- Unsupported Media Type
 	    return
 	end
@@ -291,7 +290,7 @@ function _M.process_request(self)
 	        exit_status(413) -- Request Entity Too Large
 		return
 	    end
-	    self.resource.info["Upload-Defer-Length"] = nil 
+	    self.resource.info["Upload-Defer-Length"] = nil
 	    self.resource.info["Upload-Length"] = upload_length
 	    if not sb:update_info(resource, self.resource.info) then
 	        interr(self, "Error updating resource metadata: " .. resource)
@@ -306,12 +305,12 @@ function _M.process_request(self)
 	    return
 	end
 
-	local resty_hash 
+	local resty_hash
 	local c_hash -- Client-supplied hash
 	local hash_ctx = nil
 
         if headers["upload-checksum"] then
-   	    local p = decode_base64_pair(headers["upload-checksum"])
+            local p = decode_base64_pair(headers["upload-checksum"])
 	    if not p then
 	        exit_status(ngx.HTTP_BAD_REQUEST)
 	        return
@@ -370,9 +369,9 @@ function _M.process_request(self)
 	    else
 	        csize = to_receive
 	    end
-	    local chunk, err = socket:receive(csize)
-	    if err then
-	        interr(self, "Socket receive error: " .. err)
+	    local chunk, e = socket:receive(csize)
+	    if e then
+	        interr(self, "Socket receive error: " .. e)
 		sb:close(resource)
 		return
 	    end

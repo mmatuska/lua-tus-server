@@ -44,7 +44,7 @@ end
 function _M.open(self, resource, offset)
     local shmlock = self.config["lock_zone"]
     if shmlock then
-        local lock, flags = shmlock:get(resource)
+        local lock, _ = shmlock:get(resource)
         if lock then
             return false
         end
@@ -92,7 +92,7 @@ function _M.write(self, chunk)
 end
 
 function _M.get_info(self, resource)
-    local file = io.open(self:get_info_path(resource), "r") 
+    local file = io.open(self:get_info_path(resource), "r")
     if not file then
       return nil
     end
