@@ -322,7 +322,7 @@ function _M.process_request(self)
 	    end
 	    c_hash = p.val
 	    -- In theory we support everything from lua-resty-string
-	    resty_hash = require("resty." .. c_algo)
+	    resty_hash = require('resty/' .. c_algo)
 	    if not resty_hash then
 	        exit_status(ngx.HTTP_BAD_REQUEST)
 		return
@@ -372,6 +372,7 @@ function _M.process_request(self)
 	    local chunk, err = socket:receive(csize)
 	    if err then
 	        interr(self, "Socket receive error: " .. err)
+		sb:close(resource)
 		return
 	    end
 	    if hash_ctx then
@@ -379,13 +380,13 @@ function _M.process_request(self)
 	    end
             if not sb:write(chunk) then
 	        interr(self, "Error writing to resource: " .. resource)
-                sb:close()
+                sb:close(resource)
                 return
             end
 	    cur_offset = cur_offset + csize
 	    to_receive = to_receive - csize
         end
-	sb:close()
+	sb:close(resource)
 	if hash_ctx then
 	    local digest = hash_ctx:final()
 	    if digest then

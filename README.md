@@ -11,6 +11,7 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
   - creation-defer-length
   - expiration
   - termination
+- resource locking via NGINX Lua shared memoy zones
 
 ## Requiremens
 
@@ -23,6 +24,7 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
 
 ```lua
     lua_package_path "/path/to/lua-tus-server/lib/?.lua;;";
+    lua_shared_dict tuslock 10m;
 
     server {
         location /upload/ {
@@ -30,6 +32,7 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
                 local tus = require "tus.server"
                 tus.config["storage_backend"] = "tus.storage_file"
                 tus.config["storage_backend_config"]["storage_path"] = "/tmp"
+		tus.config["storage_backend_config"]["lock_zone"] = ngx.shared.tuslock
                 tus.config["resource_url_prefix"] = "https://myserver/upload"
 		tus.config["expire_timeout"] = 1209600
                 tus:process_request()

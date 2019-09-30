@@ -6,9 +6,11 @@ local cjson = require "cjson"
 local os = require "os"
 
 local _M = {}
-_M.config = {storage_path="/tmp"}
+_M.config = {
+  storage_path="/tmp",
+  lock_zone=ngx.shared.tuslock
+}
 _M.file = nil
-_M.files = {}
 
 -- Check if a file is readable
 local function file_exists(path)
@@ -40,6 +42,13 @@ function _M.get_info_path(self, resource)
 end
 
 function _M.open(self, resource, offset)
+    local shmlock = self.config["lock_zone"]
+    if shmlock then
+        local lock, flags = shmlock:get(resource)
+        if lock then
+            return false
+        end
+    end
     if self.file then
         self.file:close()
 	self.file = nil
@@ -48,18 +57,28 @@ function _M.open(self, resource, offset)
     if not file then
         return false
     end
+    if shmlock then
+        shmlock:set(resource, true)
+    end
     if offset and offset > 0 and not file:seek("set", offset) then
         file:close()
+	if self.shmlock then
+	    self.shmlock:delete(resource)
+	end
         return false
     end
     self.file = file
     return true
 end
 
-function _M.close(self)
+function _M.close(self, resource)
+    local shmlock = self.config["lock_zone"]
     if self.file then
         self.file:close()
 	self.file = nil
+    end
+    if shmlock then
+        shmlock:delete(resource)
     end
     return true
 end
