@@ -154,7 +154,8 @@ function _M.process_request(self)
 	local rnd
         if (udefer ~= nil and udefer ~= "1") or
           (not ulen and not udefer) or
-          (ulen and udefer) then
+          (ulen and udefer) or
+          (ulen and ulen < 0) then
             exit_status(ngx.HTTP_BAD_REQUEST)
             return
         end
