@@ -228,6 +228,7 @@ function _M.process_request(self)
     end
 
     if method == "HEAD" then
+        ngx.header["Cache-Control"] = "no_store"
 	if self.resource.info["Upload-Expires"] then
 	    local secs = ngx.parse_http_time(self.resource.info["Upload-Expires"])
 	    ngx.update_time()
