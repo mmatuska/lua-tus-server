@@ -147,12 +147,12 @@ function _M.process_request(self)
 
     if method == "POST" then
         local ulen = tonumber(headers["upload-length"])
-        local udefer = headers["upload-defer-length"]
+        local udefer = tonumber(headers["upload-defer-length"])
 	local umeta = headers["upload-metadata"]
 	local metadata = nil
 	local newresource
 	local rnd
-        if (udefer ~= nil and udefer ~= "1") or
+        if (udefer ~= nil and udefer ~= 1) or
           (not ulen and not udefer) or
           (ulen and udefer) or
           (ulen and ulen < 0) then
@@ -240,7 +240,7 @@ function _M.process_request(self)
 	end
         ngx.header["Upload-Offset"] = self.resource.info["Upload-Offset"]
         if self.resource.info["Upload-Defer-Length"] then
-            ngx.header["Upload-Defer-Length"] = "1"
+            ngx.header["Upload-Defer-Length"] = 1
         end
         if self.resource.info["Upload-Length"] then
             ngx.header["Upload-Length"] = self.resource.info["Upload-Length"]
