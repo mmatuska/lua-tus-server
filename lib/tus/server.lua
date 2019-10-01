@@ -316,10 +316,6 @@ function _M.process_request(self)
     end
 
     if method == "DELETE" then
-        if not extensions.termination then
-            exit_status(ngx.HTTP_NOT_ALLOWED)
-	    return
-	end
         local ret = sb:delete(resource)
 	if ret then
 	    exit_status(ngx.HTTP_NO_CONTENT)
