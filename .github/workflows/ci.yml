@@ -1,0 +1,23 @@
+name: Ubuntu
+
+on: [push, pull_request]
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Install dependencies
+      run: sudo apt-get -y install --no-install-recommends wget gnupg ca-certificates software-properties-common lua-check
+    - name: Import OpenResty GPG key
+      run: wget -O - https://openresty.org/package/pubkey.gpg | sudo apt-key add -
+    - name: Install OpenResty repository
+      run: sudo add-apt-repository -y "deb http://openresty.org/package/ubuntu `lsb_release -sc` main"
+    - name: Install OpenResty
+      run: sudo apt-get -y install openresty libtest-nginx-perl
+    - name: Link library
+      run: sudo ln -sf `pwd`/lib/tus /usr/local/openresty/lualib/tus
+    - name: Check Lua syntax
+      run: luacheck lib
+    - name: Run tests
+      run: ./run_tests.sh

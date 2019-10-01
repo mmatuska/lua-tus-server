@@ -3,4 +3,5 @@
 *~
 go
 t/servroot/
+t/tus_temp/
 reindex
