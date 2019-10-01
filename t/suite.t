@@ -1,6 +1,6 @@
 use Test::Nginx::Socket::Lua;
 
-plan tests => 85;
+plan tests => 110;
 no_shuffle();
 run_tests();
 
@@ -42,6 +42,64 @@ Tus-Extension: checksum,creation,creation-defer-length,expiration,termination
 Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
 
+=== Block A3: OPTIONS with creation extension disabled
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+	    tus.config.extension.creation = false
+            tus:process_request()
+        }
+    }
+--- request
+OPTIONS /upload/
+--- response_headers
+Tus-Resumable: 1.0.0
+Tus-Version: 1.0.0
+Tus-Extension: checksum,expiration,termination
+Tus-Checksum-Algorithm: md5,sha1,sha256
+--- error_code: 204
+
+=== Block A4: OPTIONS with checksum extension disabled
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+	    tus.config.extension.checksum = false
+            tus:process_request()
+        }
+    }
+--- request
+OPTIONS /upload/
+--- response_headers
+Tus-Resumable: 1.0.0
+Tus-Version: 1.0.0
+Tus-Extension: creation,creation-defer-length,expiration,termination
+!Tus-Checksum-Algorithm
+--- error_code: 204
+
+=== Block A5: OPTIONS with all extensions disabled
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+	    tus.config.extension.checksum = false
+	    tus.config.extension.creation = false
+	    tus.config.extension.creation_defer_length = false
+	    tus.config.extension.expiration = false
+	    tus.config.extension.termination = false
+            tus:process_request()
+        }
+    }
+--- request
+OPTIONS /upload/
+--- response_headers
+Tus-Resumable: 1.0.0
+Tus-Version: 1.0.0
+!Tus-Extension
+!Tus-Checksum-Algorithm
+--- error_code: 204
+
 === Block B1: Invalid method GET
 --- config
     location /upload/ {
@@ -71,7 +129,7 @@ GET /upload/
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
+            tus.config.resource_url_prefix = "http://localhost/upload"
             tus:process_request()
         }
     }
@@ -84,7 +142,7 @@ POST /upload/
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
+            tus.config.resource_url_prefix = "http://localhost/upload"
             tus:process_request()
         }
     }
@@ -99,7 +157,7 @@ Tus-Resumable: 0.9.9
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
+            tus.config.resource_url_prefix = "http://localhost/upload"
             tus:process_request()
         }
     }
@@ -114,7 +172,7 @@ POST /upload/
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
+            tus.config.resource_url_prefix = "http://localhost/upload"
             tus:process_request()
         }
     }
@@ -130,9 +188,9 @@ Upload-Length: -1
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -151,9 +209,9 @@ Location: http://localhost/upload/[\da-f]+
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -167,15 +225,34 @@ Tus-Resumable: 1\.0\.0
 Location: http://localhost/upload/[\da-f]+
 --- error_code: 201
 
-=== Block C7: POST with Upload-Length exceeding Tus-Max-Size
+=== Block C7: POST with creation disabled
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
-	    tus.config["max_size"] = 1048576
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.creation = false
+            tus:process_request()
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Length: 10
+--- request
+POST /upload/
+--- error_code: 405
+
+=== Block C8: POST with Upload-Length exceeding Tus-Max-Size
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.max_size = 1048576
             tus:process_request()
         }
     }
@@ -186,14 +263,14 @@ Upload-Length: 1048577
 POST /upload/
 --- error_code: 413
 
-=== Block C8: POST with positive Upload-Length and Upload-Defer-Length
+=== Block C9: POST with positive Upload-Length and Upload-Defer-Length
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -205,14 +282,14 @@ Upload-Defer-Length: 1
 POST /upload/
 --- error_code: 400
 
-=== Block C9: POST with invalid Upload-Defer-Length
+=== Block C10: POST with invalid Upload-Defer-Length
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -223,14 +300,14 @@ Upload-Defer-Length: abc
     POST /upload/
 --- error_code: 400
 
-=== Block C10: POST with valid Upload-Defer-Length
+=== Block C11: POST with valid Upload-Defer-Length
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -244,14 +321,33 @@ Tus-Resumable: 1\.0\.0
 Location: http://localhost/upload/[\da-f]+
 --- error_code: 201
 
-=== Block C11: POST returning Upload-Expires
+=== Block C12: POST with Upload-Defer-Length and creation-defer-length disabled
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.creation_defer_length = false
+            tus:process_request()
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Defer-Length: 1
+--- request
+POST /upload/
+--- error_code: 400
+
+=== Block C13: POST returning Upload-Expires
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config["expire_timeout"] = 3600
             tus:process_request()
         }
@@ -267,14 +363,14 @@ Upload-Expires: (Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d\d (Jan|Feb|Mar|Apr|May|Jun|Jul
 Location: http://localhost/upload/[\da-f]+
 --- error_code: 201
 
-=== Block C12: POST with invalid Upload-Metadata 1
+=== Block C14: POST with invalid Upload-Metadata 1
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -286,14 +382,14 @@ Upload-Metadata: testkey testval-
 POST /upload/
 --- error_code: 400
 
-=== Block C13: POST with invalid Upload-Metadata 2
+=== Block C15: POST with invalid Upload-Metadata 2
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -305,14 +401,14 @@ Upload-Metadata: testkey dGVzdHZhbA== aa
     POST /upload/
 --- error_code: 400
 
-=== Block C14: POST with invalid Upload-Metadata 3
+=== Block C16: POST with invalid Upload-Metadata 3
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -324,14 +420,14 @@ Upload-Metadata: testkey dGVzdHZhbA==,
 POST /upload/
 --- error_code: 400
 
-=== Block C15: POST with invalid Upload-Metadata 4
+=== Block C17: POST with invalid Upload-Metadata 4
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -343,14 +439,14 @@ Upload-Metadata: testkey dGVzdHZhbA==,testkey2 testval*
     POST /upload/
 --- error_code: 400
 
-=== Block C16: POST with valid Upload-Metadata 5
+=== Block C18: POST with valid Upload-Metadata 5
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -370,9 +466,9 @@ POST /upload/
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -387,9 +483,9 @@ HEAD /upload/1234567890
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -409,9 +505,9 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -425,14 +521,32 @@ Upload-Offset: 0
 Upload-Defer-Length: 1
 --- error_code: 204
 
-=== Block D4: PATCH without Content-Type
+=== Block D4: HEAD on resource with Upload-Defer-Length with ext disabled
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.creation_defer_length = false
+            tus:process_request()
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+--- request
+    HEAD /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
+--- error_code: 403
+
+=== Block E1: PATCH without Content-Type
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -444,14 +558,14 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 123456
 --- error_code: 415
 
-=== Block E1: PATCH with invalid Content-Type
+=== Block E2: PATCH with invalid Content-Type
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -464,14 +578,14 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 123456
 --- error_code: 415
 
-=== Block E2: PATCH without Upload-Offset
+=== Block E3: PATCH without Upload-Offset
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -484,14 +598,14 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 123456
 --- error_code: 409
 
-=== Block E3: PATCH first chunk
+=== Block E4: PATCH first chunk
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -508,14 +622,14 @@ Tus-Resumable: 1.0.0
 Upload-Offset: 6
 --- error_code: 204
 
-=== Block E4: PATCH chunk exceeding Upload-Length
+=== Block E5: PATCH chunk exceeding Upload-Length
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -529,14 +643,14 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 789012
 --- error_code: 409
 
-=== Block E5: PATCH last chunk
+=== Block E6: PATCH last chunk
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -553,14 +667,14 @@ Tus-Resumable: 1.0.0
 Upload-Offset: 10
 --- error_code: 204
 
-=== Block E6: HEAD on completed upload
+=== Block E7: HEAD on completed upload
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -575,14 +689,14 @@ Upload-Length: 10
 Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 --- error_code: 204
 
-=== Block E7: PATCH on Upload-Defer-Length without Upload-Length
+=== Block E8: PATCH on Upload-Defer-Length without Upload-Length
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -596,15 +710,15 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 123456
 --- error_code: 409
 
-=== Block E8: PATCH on Upload-Defer-Length with Upload-Length > Tus_Max_Size
+=== Block E9: PATCH on Upload-Defer-Length with Upload-Length > Tus_Max_Size
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
-	    tus.config["max_size"] = 1048576
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.max_size = 1048576
             tus:process_request()
         }
     }
@@ -619,14 +733,37 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 12345678
 --- error_code: 413
 
-=== Block E9: PATCH on Upload-Defer-Length with valid Upload-Length
+=== Block E10: PATCH on Upload-Defer-Length with ext disabled
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.creation_defer_length = false
+            tus:process_request()
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Content-Length: 8
+Content-Type: application/offset+octet-stream
+Upload-Offset: 0
+Upload-Length: 20
+--- request
+PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
+12345678
+--- error_code: 403
+
+=== Block E11: PATCH on Upload-Defer-Length with valid Upload-Length
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -644,14 +781,14 @@ Tus-Resumable: 1.0.0
 Upload-Offset: 8
 --- error_code: 204
 
-=== Block E10: HEAD on partial upload
+=== Block E12: HEAD on partial upload
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -665,14 +802,14 @@ Upload-Offset: 8
 Upload-Length: 20
 --- error_code: 204
 
-=== Block E11: HEAD on expired upload
+=== Block E13: HEAD on expired upload
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -682,14 +819,54 @@ Tus-Resumable: 1.0.0
 HEAD /upload/c29e4d9b20fb6495843de87b2f508826
 --- error_code: 410
 
-=== Block F1: DELETE on existing resource
+=== Block E14: HEAD on expired upload without expiration extension
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.expiration = false
+            tus:process_request()
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+--- request
+HEAD /upload/c29e4d9b20fb6495843de87b2f508826
+--- response_headers
+Tus-Resumable: 1.0.0
+Upload-Length: 10
+Upload-Offset: 0
+--- error_code: 204
+
+=== Block F1: DELETE on existing resource without termination extension
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.termination = false
+            tus:process_request()
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+--- request
+DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
+--- error_code: 405
+
+=== Block F2: DELETE on existing resource
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -699,14 +876,14 @@ Tus-Resumable: 1.0.0
 DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 204
 
-=== Block F2: DELETE on non-existing resource
+=== Block F3: DELETE on non-existing resource
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -721,9 +898,9 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -743,9 +920,9 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -765,9 +942,9 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -782,14 +959,37 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 1234567890123456789012345
 --- error_code: 460
 
-=== Block G4: PATCH with valid MD5 checksum
+=== Block G4: PATCH with valid MD5 checksum without checksum extension
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.checksum = false
+            tus:process_request()
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Content-Length: 25
+Content-Type: application/offset+octet-stream
+Upload-Checksum: md5 OWE3ODk2MjVmMzhhNjg2MDI3ZWI1ZjdkYTM0OThjNjA=
+Upload-Offset: 0
+--- request
+PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
+1234567890123456789012345
+--- error_code: 400
+
+=== Block G5: PATCH with valid MD5 checksum
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -807,14 +1007,14 @@ Tus-Resumable: 1.0.0
 Upload-Offset: 25
 --- error_code: 204
 
-=== Block G5: PATCH with invalid SHA1 checksum
+=== Block G6: PATCH with invalid SHA1 checksum
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -829,14 +1029,14 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 1234567890123456789012345
 --- error_code: 460
 
-=== Block G6: PATCH with valid SHA1 checksum
+=== Block G7: PATCH with valid SHA1 checksum
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -854,14 +1054,14 @@ Tus-Resumable: 1.0.0
 Upload-Offset: 25
 --- error_code: 204
 
-=== Block G7: PATCH with invalid SHA256 checksum
+=== Block G8: PATCH with invalid SHA256 checksum
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -876,14 +1076,14 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 1234567890123456789012345
 --- error_code: 460
 
-=== Block G8: PATCH with valid SHA256 checksum
+=== Block G9: PATCH with valid SHA256 checksum
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }
@@ -901,15 +1101,15 @@ Tus-Resumable: 1.0.0
 Upload-Offset: 25
 --- error_code: 204
 
-=== Block G9: PATCH with SHA256 sum and internal multi-chunk
+=== Block G10: PATCH with SHA256 sum and internal multi-chunk
 --- config
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus.config["resource_url_prefix"] = "http://localhost/upload"
-	    tus.config["chunk_size"] = 100
-	    tus.config["storage_backend"] = "tus.storage_file"
-	    tus.config["storage_backend_config"]["storage_path"] = "./t/tus_temp"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.chunk_size = 100
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
             tus:process_request()
         }
     }

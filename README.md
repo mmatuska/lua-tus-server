@@ -5,12 +5,13 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
 ## Features
 
 - [tus protocol 1.0.0](https://tus.io/protocols/resumable-upload.html)
-- tus extensions
+- supported tus extensions:
   - checksum (md5, sha1, sha256)
   - creation
   - creation-defer-length
   - expiration
   - termination
+- each tus extension can be disabled
 - resource locking via NGINX Lua shared memoy zones
 
 ## Requiremens
@@ -30,11 +31,11 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
         location /upload/ {
             content_by_lua_block {
                 local tus = require "tus.server"
-                tus.config["storage_backend"] = "tus.storage_file"
-                tus.config["storage_backend_config"]["storage_path"] = "/tmp"
-		tus.config["storage_backend_config"]["lock_zone"] = ngx.shared.tuslock
-                tus.config["resource_url_prefix"] = "https://myserver/upload"
-		tus.config["expire_timeout"] = 1209600
+                tus.config.storage_backend = "tus.storage_file"
+                tus.config.storage_backend_config.storage_path = "/tmp"
+		tus.config.storage_backend_config.lock_zone = ngx.shared.tuslock
+                tus.config.resource_url_prefix = "https://myserver/upload"
+		tus.config.expire_timeout = 1209600
                 tus:process_request()
 
                 if tus.resource.name and tus.resource.state == "completed" then

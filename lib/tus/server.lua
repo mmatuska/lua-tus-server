@@ -15,7 +15,14 @@ _M.config = {
   socket_timeout=30000,
   expire_timeout=0,
   storage_backend="tus.storage_file",
-  storage_backend_config={}
+  storage_backend_config={},
+  extension = {
+    checksum=true,
+    creation=true,
+    creation_defer_length=true,
+    expiration=true,
+    termination=true
+  }
 }
 _M.resource = {
   name=nil,
@@ -82,6 +89,31 @@ local function encode_metadata(mtable)
     return ret
 end
 
+local function get_extensions_string(extensions)
+    if not extensions then
+	return false
+    end
+
+    local e = {}
+    for k in pairs(extensions) do
+        table.insert(e, k)
+    end
+    table.sort(e)
+    local exstr = ""
+    for _,key in ipairs(e) do
+        if extensions[key] then
+	    if exstr ~= "" then
+		    exstr = exstr .. ","
+            end
+	    exstr = exstr .. key
+	end
+    end
+    if exstr == "" then
+        return nil
+    end
+    return exstr:gsub("_", "-")
+end
+
 local function interr(self, str)
     ngx.log(ngx.ERR, str)
     self.failed = true
@@ -97,10 +129,16 @@ function _M.process_request(self)
     -- All responses include the Tus-Resumable header
     ngx.header["Tus-Resumable"] = tus_version
 
-    if not self then
-        interr(self, "invalid function call")
-	return
+    if not self.config then
+        interr(self, "configuration missing")
     end
+    -- Store extension support
+    local extensions = self.config.extension
+    -- Autodisable creation-defer-length if creation is disabled
+    if not extensions.creation then
+        extensions.creation_defer_length = false
+    end
+
     -- Read storage backend
     local sb = require(self.config.storage_backend)
     if not sb then
@@ -123,9 +161,14 @@ function _M.process_request(self)
     self.method = method
 
     if method == "OPTIONS" then
+	local extstr = get_extensions_string(extensions)
         ngx.header["Tus-Version"] = tus_version
-        ngx.header["Tus-Extension"] = "checksum,creation,creation-defer-length,expiration,termination"
-	ngx.header["Tus-Checksum-Algorithm"] = "md5,sha1,sha256"
+	if extstr then
+            ngx.header["Tus-Extension"] = extstr
+	end
+	if extensions.checksum then
+	    ngx.header["Tus-Checksum-Algorithm"] = "md5,sha1,sha256"
+	end
 	if self.config["max_size"] > 0 then
 	    ngx.header["Tus-Max-Size"] = self.config["max_size"]
 	end
@@ -133,8 +176,10 @@ function _M.process_request(self)
         return
     end
 
-    if method ~= "HEAD" and method ~= "PATCH"
-      and method ~= "POST" and method ~= "DELETE" then
+    if (method ~= "HEAD" and method ~= "PATCH"
+      and method ~= "POST" and method ~= "DELETE") or
+      (method == "POST" and not extensions.creation) or
+      (method == "DELETE" and not extensions.termination) then
         exit_status(ngx.HTTP_NOT_ALLOWED)
 	return
     end
@@ -147,7 +192,13 @@ function _M.process_request(self)
 
     if method == "POST" then
         local ulen = tonumber(headers["upload-length"])
-        local udefer = tonumber(headers["upload-defer-length"])
+	local udefer
+	-- Ignore Upload-Defer-Length if not supported
+	if extensions.creation_defer_length then
+            udefer = tonumber(headers["upload-defer-length"])
+	else
+	    udefer = nil
+	end
 	local umeta = headers["upload-metadata"]
 	local metadata = nil
 	local newresource
@@ -180,7 +231,7 @@ function _M.process_request(self)
 	info["Upload-Length"] = ulen
 	info["Upload-Defer-Length"] = udefer
 	info["Upload-Metadata"] = metadata
-	if self.config.expire_timeout > 0 then
+	if extensions.expiration and self.config.expire_timeout > 0 then
 	    local secs = ngx.time() + self.config.expire_timeout
 	    info["Upload-Expires"] = ngx.http_time(secs)
 	end
@@ -191,7 +242,7 @@ function _M.process_request(self)
 	    return
 	else
 	    ngx.header["Location"] = self.config.resource_url_prefix .. "/" .. newresource
-	    if info["Upload-Expires"] then
+	    if extensions.expiration and info["Upload-Expires"] then
                 ngx.header["Upload-Expires"] = info["Upload-Expires"]
 	    end
 	    if info["Upload-Defer-Length"] then
@@ -228,8 +279,14 @@ function _M.process_request(self)
     end
 
     if method == "HEAD" then
+	-- If creation-defer-length is disabled, ignore such resources
+	if not extensions.creation_defer_length and
+	  self.resource.info["Upload-Defer-Length"] then
+	    exit_status(ngx.HTTP_FORBIDDEN)
+	    return
+	end
         ngx.header["Cache-Control"] = "no_store"
-	if self.resource.info["Upload-Expires"] then
+	if extensions.expiration and self.resource.info["Upload-Expires"] then
 	    local secs = ngx.parse_http_time(self.resource.info["Upload-Expires"])
 	    ngx.update_time()
 	    if secs and ngx.now() > secs then
@@ -251,7 +308,7 @@ function _M.process_request(self)
               ngx.header["Upload-Metadata"] = metadata
             end
         end
-	if self.resource.info["Upload-Expires"] then
+	if extensions.expiration and self.resource.info["Upload-Expires"] then
 	    ngx.header["Upload-Expires"] = self.resource.info["Upload-Expires"]
 	end
         exit_status(ngx.HTTP_NO_CONTENT)
@@ -259,6 +316,10 @@ function _M.process_request(self)
     end
 
     if method == "DELETE" then
+        if not extensions.termination then
+            exit_status(ngx.HTTP_NOT_ALLOWED)
+	    return
+	end
         local ret = sb:delete(resource)
 	if ret then
 	    exit_status(ngx.HTTP_NO_CONTENT)
@@ -281,6 +342,10 @@ function _M.process_request(self)
 	end
 	local upload_length
 	if self.resource.info["Upload-Defer-Length"] then
+	    if not extensions.creation_defer_length then
+                exit_status(ngx.HTTP_FORBIDDEN)
+		return
+            end
 	    upload_length = tonumber(headers["upload-length"])
 	    if not upload_length then
 	        exit_status(ngx.HTTP_CONFLICT)
@@ -311,6 +376,10 @@ function _M.process_request(self)
 	local hash_ctx = nil
 
         if headers["upload-checksum"] then
+	    if not extensions.checksum then
+                exit_status(ngx.HTTP_BAD_REQUEST)
+		return
+            end
             local p = decode_base64_pair(headers["upload-checksum"])
 	    if not p then
 	        exit_status(ngx.HTTP_BAD_REQUEST)
