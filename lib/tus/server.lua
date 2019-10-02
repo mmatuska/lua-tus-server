@@ -16,6 +16,7 @@ _M.config = {
   expire_timeout=0,
   storage_backend="tus.storage_file",
   storage_backend_config={},
+  hard_delete=false,
   extension = {
     checksum=true,
     creation=true,
@@ -266,6 +267,12 @@ function _M.process_request(self)
        exit_status(ngx.HTTP_NOT_FOUND)
        return true
     end
+    -- If the resource is marked as deleted, return 410
+    if self.resource.info.deleted then
+	self.resource.state = "deleted"
+        exit_status(ngx.HTTP_GONE)
+	return true
+    end
 
     if self.resource.info.offset == 0 then
         self.resource.state = "empty"
@@ -312,12 +319,14 @@ function _M.process_request(self)
     end
 
     if method == "DELETE" then
-        local ret = sb:delete(resource)
-	if ret then
-	    exit_status(ngx.HTTP_NO_CONTENT)
-	else
-	    return interr(self, "Error deleting resource: " .. resource)
+	self.resource.info.deleted = true
+	if not sb:update_info(resource, self.resource.info) then
+	    return interr(self, "Error updating resource metadata: " .. resource)
+        end
+	if self.config.hard_delete and not sb:delete(resource) then
+            return interr(self, "Error deleting resource: " .. resource)
 	end
+        exit_status(ngx.HTTP_NO_CONTENT)
 	self.resource.state = "deleted"
 	return true
     end

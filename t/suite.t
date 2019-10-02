@@ -1,6 +1,6 @@
 use Test::Nginx::Socket::Lua;
 
-plan tests => 110;
+plan tests => 113;
 no_shuffle();
 run_tests();
 
@@ -966,7 +966,7 @@ Tus-Resumable: 1.0.0
 DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 204
 
-=== Block F3: DELETE on non-existing resource
+=== Block F3: DELETE on already deleted resource
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -983,6 +983,64 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 Tus-Resumable: 1.0.0
 --- request
 DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
+--- error_code: 410
+
+=== Block F4: DELETE on non-existing resource
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+--- request
+DELETE /upload/12345678
+--- error_code: 404
+
+=== Block F5: DELETE on existing resource with hard_delete 
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.hard_delete = true
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+--- request
+DELETE /upload/a25a7129d4e15fdce548ef0aad7a05b7
+--- error_code: 204
+
+=== Block F6: DELETE on resource already hard deleted
+--- config
+    location /upload/ {
+        content_by_lua_block {
+            local tus = require "tus.server"
+            tus.config.resource_url_prefix = "http://localhost/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
+        }
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+--- request
+DELETE /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- error_code: 404
 
 === Block G1: PATCH with badly encoded checksum

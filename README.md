@@ -5,14 +5,15 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
 ## Features
 
 - [tus protocol 1.0.0](https://tus.io/protocols/resumable-upload.html)
-- supported tus extensions:
+- tus extensions:
   - checksum (md5, sha1, sha256)
   - creation
   - creation-defer-length
   - expiration
   - termination
-- each tus extension can be disabled
+- each tus extension can be individually disabled
 - resource locking via NGINX Lua shared memoy zones
+- soft and hard deleteion of resources
 
 ## Requiremens
 
