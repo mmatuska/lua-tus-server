@@ -449,8 +449,7 @@ function _M.process_request(self)
 	    return true
 	end
 	if self.resource.info.expires then
-	    local secs = ngx.parse_http_time(self.resource.info.expires)
-	    ngx.update_time()
+	    local secs = self.resource.info.expires
 	    if secs and ngx.now() > secs then
 		self.resource.state = "expired"
 		exit_status(ngx.HTTP_GONE)
