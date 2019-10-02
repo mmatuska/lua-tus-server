@@ -251,8 +251,13 @@ function _M.process_request(self)
 	    if not sb:get_info(newresource) then break end
 	end
 	local info = {}
-	info.size = ulen
-	info.defer = udefer
+	info.offset = 0
+	if ulen ~= false then
+	    info.size = ulen
+	end
+	if udefer ~= false then
+	    info.defer = udefer
+	end
 	info.metadata = metadata
 	if extensions.expiration and self.config.expire_timeout > 0 then
 	    info.expires = ngx.time() + self.config.expire_timeout

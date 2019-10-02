@@ -113,8 +113,6 @@ function _M.update_info(self, resource, data)
 end
 
 function _M.create(self, resource, data)
-    -- Set upload-offset to zero
-    data["Upload-Offset"] = 0
     local file
     file = io.open(self:get_path(resource), "w")
     if not file then
