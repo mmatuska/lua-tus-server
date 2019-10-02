@@ -11,7 +11,9 @@ __DATA__
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- request
@@ -28,7 +30,9 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- request
@@ -48,7 +52,9 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
         content_by_lua_block {
             local tus = require "tus.server"
 	    tus.config.extension.creation = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- request
@@ -66,7 +72,9 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
         content_by_lua_block {
             local tus = require "tus.server"
 	    tus.config.extension.checksum = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- request
@@ -88,7 +96,9 @@ Tus-Extension: creation,creation-defer-length,expiration,termination
 	    tus.config.extension.creation_defer_length = false
 	    tus.config.extension.expiration = false
 	    tus.config.extension.termination = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- request
@@ -105,7 +115,9 @@ Tus-Version: 1.0.0
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- request
@@ -117,7 +129,9 @@ GET /upload/
     location /upload/ {
         content_by_lua_block {
             local tus = require "tus.server"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- request
@@ -130,7 +144,9 @@ GET /upload/
         content_by_lua_block {
             local tus = require "tus.server"
             tus.config.resource_url_prefix = "http://localhost/upload"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- request
@@ -143,7 +159,9 @@ POST /upload/
         content_by_lua_block {
             local tus = require "tus.server"
             tus.config.resource_url_prefix = "http://localhost/upload"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -158,7 +176,9 @@ Tus-Resumable: 0.9.9
         content_by_lua_block {
             local tus = require "tus.server"
             tus.config.resource_url_prefix = "http://localhost/upload"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -173,7 +193,9 @@ POST /upload/
         content_by_lua_block {
             local tus = require "tus.server"
             tus.config.resource_url_prefix = "http://localhost/upload"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -191,7 +213,9 @@ Upload-Length: -1
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -212,7 +236,9 @@ Location: http://localhost/upload/[\da-f]+
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -234,7 +260,9 @@ Location: http://localhost/upload/[\da-f]+
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.creation = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -253,7 +281,9 @@ POST /upload/
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.max_size = 1048576
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -271,7 +301,9 @@ POST /upload/
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -290,7 +322,9 @@ POST /upload/
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -308,7 +342,9 @@ Upload-Defer-Length: abc
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -330,7 +366,9 @@ Location: http://localhost/upload/[\da-f]+
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.creation_defer_length = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -349,7 +387,9 @@ POST /upload/
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config["expire_timeout"] = 3600
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -371,7 +411,9 @@ Location: http://localhost/upload/[\da-f]+
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -390,7 +432,9 @@ POST /upload/
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -409,7 +453,9 @@ Upload-Metadata: testkey dGVzdHZhbA== aa
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -428,7 +474,9 @@ POST /upload/
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -447,7 +495,9 @@ Upload-Metadata: testkey dGVzdHZhbA==,testkey2 testval*
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -469,7 +519,9 @@ POST /upload/
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -486,7 +538,9 @@ HEAD /upload/1234567890
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -508,7 +562,9 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -530,7 +586,9 @@ Upload-Defer-Length: 1
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.creation_defer_length = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -547,7 +605,9 @@ Tus-Resumable: 1.0.0
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -566,7 +626,9 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -586,7 +648,9 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -606,7 +670,9 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -630,7 +696,9 @@ Upload-Offset: 6
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -651,7 +719,9 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -675,7 +745,9 @@ Upload-Offset: 10
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -697,7 +769,9 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -719,7 +793,9 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.max_size = 1048576
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -742,7 +818,9 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.creation_defer_length = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -764,7 +842,9 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -789,7 +869,9 @@ Upload-Offset: 8
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -810,7 +892,9 @@ Upload-Length: 20
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -828,7 +912,9 @@ HEAD /upload/c29e4d9b20fb6495843de87b2f508826
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.expiration = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -850,7 +936,9 @@ Upload-Offset: 0
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.termination = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -867,7 +955,9 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -884,7 +974,9 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -901,7 +993,9 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -923,7 +1017,9 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -945,7 +1041,9 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -968,7 +1066,9 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.checksum = false
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -990,7 +1090,9 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -1015,7 +1117,9 @@ Upload-Offset: 25
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -1037,7 +1141,9 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -1062,7 +1168,9 @@ Upload-Offset: 25
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -1084,7 +1192,9 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
             tus.config.resource_url_prefix = "http://localhost/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers
@@ -1110,7 +1220,9 @@ Upload-Offset: 25
 	    tus.config.chunk_size = 100
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            tus:process_request()
+            if not tus:process_request() then
+                ngx.log("tus error: " .. tus.err)
+            end
         }
     }
 --- more_headers

@@ -29,6 +29,7 @@ _M.resource = {
   info=nil,
   state=nil
 }
+_M.err = nil
 _M.sb = nil
 
 local function split(s, delimiter)
@@ -115,9 +116,9 @@ local function get_extensions_string(extensions)
 end
 
 local function interr(self, str)
-    ngx.log(ngx.ERR, str)
-    self.failed = true
     ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+    self.err = str
+    return false
 end
 
 local function exit_status(status)
@@ -130,7 +131,7 @@ function _M.process_request(self)
     ngx.header["Tus-Resumable"] = tus_version
 
     if not self.config then
-        interr(self, "configuration missing")
+        return interr(self, "configuration missing")
     end
     -- Store extension support
     local extensions = self.config.extension
@@ -142,8 +143,7 @@ function _M.process_request(self)
     -- Read storage backend
     local sb = require(self.config.storage_backend)
     if not sb then
-       interr(self, "could not load storage backend")
-       return
+       return interr(self, "could not load storage backend")
     end
     sb.config = self.config.storage_backend_config
 
@@ -173,7 +173,7 @@ function _M.process_request(self)
 	    ngx.header["Tus-Max-Size"] = self.config["max_size"]
 	end
         ngx.status = ngx.HTTP_NO_CONTENT
-        return
+        return true
     end
 
     if (method ~= "HEAD" and method ~= "PATCH"
@@ -181,13 +181,13 @@ function _M.process_request(self)
       (method == "POST" and not extensions.creation) or
       (method == "DELETE" and not extensions.termination) then
         exit_status(ngx.HTTP_NOT_ALLOWED)
-	return
+	return true
     end
 
     if not headers["tus-resumable"] or
       headers["tus-resumable"] ~= tus_version then
         exit_status(412) -- Precondition Failed
-	return
+	return true
     end
 
     if method == "POST" then
@@ -208,18 +208,18 @@ function _M.process_request(self)
           (ulen and udefer) or
           (ulen and ulen < 0) then
             exit_status(ngx.HTTP_BAD_REQUEST)
-            return
+            return true
         end
 	if self.config["max_size"] > 0 and ulen and
 	  ulen > self.config["max_size"] then
 	    exit_status(413) -- Request Entity Too Large
-	    return
+	    return true
 	end
 	if umeta and umeta ~= "" then
             metadata = decode_metadata(umeta)
 	    if not metadata then
 	        exit_status(ngx.HTTP_BAD_REQUEST)
-		return
+		return true
 	    end
 	end
 	while true do
@@ -237,9 +237,7 @@ function _M.process_request(self)
 	end
 	local ret = sb:create(newresource, info)
 	if not ret then
-            ngx.log(ngx.ERR, "Unable to create resource: " .. newresource)
-	    exit_status(ngx.HTTP_INTERNAL_SERVER_ERROR)
-	    return
+	    return interr(self, "Unable to create resource: " .. newresource)
 	else
 	    ngx.header["Location"] = self.config.resource_url_prefix .. "/" .. newresource
 	    if extensions.expiration and info["Upload-Expires"] then
@@ -251,7 +249,7 @@ function _M.process_request(self)
             self.resource.name = newresource
 	    self.resource.state = "created"
 	    exit_status(ngx.HTTP_CREATED)
-	    return
+	    return true
 	end
     end
 
@@ -259,7 +257,7 @@ function _M.process_request(self)
     local resource = string.match(ngx.var.uri,"^.*/([0-9a-f]+)$")
     if not resource then
         exit_status(ngx.HTTP_NOT_FOUND)
-        return
+        return true
     end
     self.resource.name = resource
 
@@ -267,7 +265,7 @@ function _M.process_request(self)
     self.resource.info = sb:get_info(resource)
     if not self.resource.info or not self.resource.info["Upload-Offset"] then
        exit_status(ngx.HTTP_NOT_FOUND)
-       return
+       return true
     end
 
     if self.resource.info["Upload-Offset"] == 0 then
@@ -275,7 +273,7 @@ function _M.process_request(self)
     elseif self.resource.info["Upload-Length"] == self.resource.info["Upload-Offset"] then
         self.resource.state = "completed"
     else
-        self.resource.state = "progress"
+        self.resource.state = "partial"
     end
 
     if method == "HEAD" then
@@ -283,7 +281,7 @@ function _M.process_request(self)
 	if not extensions.creation_defer_length and
 	  self.resource.info["Upload-Defer-Length"] then
 	    exit_status(ngx.HTTP_FORBIDDEN)
-	    return
+	    return true
 	end
         ngx.header["Cache-Control"] = "no_store"
 	if extensions.expiration and self.resource.info["Upload-Expires"] then
@@ -292,7 +290,7 @@ function _M.process_request(self)
 	    if secs and ngx.now() > secs then
 	        self.resource.state = "expired"
 	        exit_status(ngx.HTTP_GONE)
-		return
+		return true
 	    end
 	end
         ngx.header["Upload-Offset"] = self.resource.info["Upload-Offset"]
@@ -312,7 +310,7 @@ function _M.process_request(self)
 	    ngx.header["Upload-Expires"] = self.resource.info["Upload-Expires"]
 	end
         exit_status(ngx.HTTP_NO_CONTENT)
-        return
+        return true
     end
 
     if method == "DELETE" then
@@ -320,43 +318,42 @@ function _M.process_request(self)
 	if ret then
 	    exit_status(ngx.HTTP_NO_CONTENT)
 	else
-	    interr(self, "Error deleting resource: " .. resource)
+	    return interr(self, "Error deleting resource: " .. resource)
 	end
 	self.resource.state = "deleted"
-	return
+	return true
     end
 
     if method == "PATCH" then
         if headers["content-type"] ~= "application/offset+octet-stream" then
 	    exit_status(415) -- Unsupported Media Type
-	    return
+	    return true
 	end
 	local upload_offset = tonumber(headers["upload-offset"])
 	if not upload_offset or upload_offset ~= self.resource.info["Upload-Offset"] then
 	    exit_status(ngx.HTTP_CONFLICT)
-	    return
+	    return true
 	end
 	local upload_length
 	if self.resource.info["Upload-Defer-Length"] then
 	    if not extensions.creation_defer_length then
                 exit_status(ngx.HTTP_FORBIDDEN)
-		return
+		return true
             end
 	    upload_length = tonumber(headers["upload-length"])
 	    if not upload_length then
 	        exit_status(ngx.HTTP_CONFLICT)
-		return
+		return true
             end
 	    if self.config["max_size"] > 0 and
 	      upload_length > self.config["max_size"] then
 	        exit_status(413) -- Request Entity Too Large
-		return
+		return true
 	    end
 	    self.resource.info["Upload-Defer-Length"] = nil
 	    self.resource.info["Upload-Length"] = upload_length
 	    if not sb:update_info(resource, self.resource.info) then
-	        interr(self, "Error updating resource metadata: " .. resource)
-		return
+	        return interr(self, "Error updating resource metadata: " .. resource)
 	    end
         else
 	    upload_length = self.resource.info["Upload-Length"]
@@ -364,7 +361,7 @@ function _M.process_request(self)
 	local content_length = tonumber(headers["content-length"])
 	if not content_length or content_length < 0 then
 	    exit_status(ngx.HTTP_BAD_REQUEST)
-	    return
+	    return true
 	end
 
 	local resty_hash
@@ -374,31 +371,31 @@ function _M.process_request(self)
         if headers["upload-checksum"] then
 	    if not extensions.checksum then
                 exit_status(ngx.HTTP_BAD_REQUEST)
-		return
+		return true
             end
             local p = decode_base64_pair(headers["upload-checksum"])
 	    if not p then
 	        exit_status(ngx.HTTP_BAD_REQUEST)
-	        return
+	        return true
 	    end
 	    local c_algo = p.key -- Client supplied algo
 	    if c_algo ~= "md5" and c_algo ~= "sha1" and c_algo ~= "sha256" then
 	        exit_status(ngx.HTTP_BAD_REQUEST)
-		return
+		return true
 	    end
 	    c_hash = p.val
 	    -- In theory we support everything from lua-resty-string
 	    resty_hash = require('resty/' .. c_algo)
 	    if not resty_hash then
 	        exit_status(ngx.HTTP_BAD_REQUEST)
-		return
+		return true
 	    end
 	    hash_ctx = resty_hash:new()
 	end
 
         if (upload_offset + content_length) > upload_length then
 	    exit_status(ngx.HTTP_CONFLICT)
-	    return
+	    return true
 	end
 	if self.resource.info["Upload-Expires"] then
 	    local secs = ngx.parse_http_time(self.resource.info["Upload-Expires"])
@@ -406,18 +403,17 @@ function _M.process_request(self)
 	    if secs and ngx.now() > secs then
 	        self.resource.state = "expired"
 	        exit_status(ngx.HTTP_GONE)
-		return
+		return true
 	    end
 	end
 	if content_length == 0 then
 	    exit_status(ngx.HTTP_NO_CONTENT)
-	    return
+	    return true
 	end
 
         local socket, err = ngx.req.socket()
         if not socket then
-	    interr(self, "Socket error: "  .. err)
-            return
+	    return interr(self, "Socket error: "  .. err)
 	end
 	socket:settimeout(self.config.socket_timeout)
 
@@ -425,8 +421,7 @@ function _M.process_request(self)
 	local cur_offset = upload_offset
 	local csize
 	if not sb:open(resource, upload_offset) then
-            interr(self, "Error opening resource for writing: " .. resource)
-            return
+            return interr(self, "Error opening resource for writing: " .. resource)
         end
         while true do
 	    if to_receive <= 0 then break end
@@ -437,17 +432,15 @@ function _M.process_request(self)
 	    end
 	    local chunk, e = socket:receive(csize)
 	    if e then
-	        interr(self, "Socket receive error: " .. e)
 		sb:close(resource)
-		return
+	        return interr(self, "Socket receive error: " .. e)
 	    end
 	    if hash_ctx then
 	        hash_ctx:update(chunk)
 	    end
             if not sb:write(chunk) then
-	        interr(self, "Error writing to resource: " .. resource)
                 sb:close(resource)
-                return
+	        return interr(self, "Error writing to resource: " .. resource)
             end
 	    cur_offset = cur_offset + csize
 	    to_receive = to_receive - csize
@@ -458,24 +451,22 @@ function _M.process_request(self)
 	    if digest then
 	        if c_hash ~= rstring.to_hex(digest) then
 		    exit_status(460)
-		    return
+		    return true
 		end
             else
-	        interr(self, "Error computing checksum: " .. resource)
-		return
+	        return interr(self, "Error computing checksum: " .. resource)
 	    end
         end
 	self.resource.info["Upload-Offset"] = cur_offset
         ngx.header["Upload-Offset"] = cur_offset
 	if not sb:update_info(resource, self.resource.info) then
-	    interr(self, "Error updating resource metadata: " .. resource)
-            return
+	    return interr(self, "Error updating resource metadata: " .. resource)
         end
 	exit_status(ngx.HTTP_NO_CONTENT)
 	if cur_offset == self.resource.info["Upload-Length"] then
 	    self.resource.state = "completed"
 	end
-	return
+	return true
     end
 end
 
