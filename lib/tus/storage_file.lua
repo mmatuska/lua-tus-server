@@ -1,4 +1,4 @@
--- Local file storage backend for Lua tus server
+-- Local file storage backend for lua-tus-server
 --
 -- Copyright (C) by Martin Matuska (mmatuska)
 

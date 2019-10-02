@@ -1,6 +1,6 @@
 use Test::Nginx::Socket::Lua;
 
-plan tests => 113;
+plan tests => 131;
 no_shuffle();
 run_tests();
 
@@ -188,6 +188,7 @@ POST /upload/
 --- error_code: 400
 
 === Block C4: POST with negative Upload-Length
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -204,6 +205,7 @@ Upload-Length: -1
 --- request
     POST /upload/
 --- error_code: 400
+--- error_log: Received negative Upload-Length
 
 === Block C5: POST with zero Upload-Length
 --- config
@@ -273,6 +275,7 @@ POST /upload/
 --- error_code: 405
 
 === Block C8: POST with Upload-Length exceeding Tus-Max-Size
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -292,8 +295,10 @@ Upload-Length: 1048577
 --- request
 POST /upload/
 --- error_code: 413
+--- error_log: Upload-Length exceeds Tus-Max-Size
 
 === Block C9: POST with positive Upload-Length and Upload-Defer-Length
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -313,8 +318,10 @@ Upload-Defer-Length: 1
 --- request
 POST /upload/
 --- error_code: 400
+--- error_log: Received both Upload-Length and Upload-Defer-Length
 
 === Block C10: POST with invalid Upload-Defer-Length
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -333,6 +340,7 @@ Upload-Defer-Length: abc
 --- request
     POST /upload/
 --- error_code: 400
+--- error_log: Invalid Upload-Defer-Length
 
 === Block C11: POST with valid Upload-Defer-Length
 --- config
@@ -404,6 +412,7 @@ Location: http://localhost/upload/[\da-f]+
 --- error_code: 201
 
 === Block C14: POST with invalid Upload-Metadata 1
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -423,8 +432,10 @@ Upload-Metadata: testkey testval-
 --- request
 POST /upload/
 --- error_code: 400
+--- eror_log: Invalid Upload-Metadata
 
 === Block C15: POST with invalid Upload-Metadata 2
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -444,8 +455,10 @@ Upload-Metadata: testkey dGVzdHZhbA== aa
 --- request
     POST /upload/
 --- error_code: 400
+--- error_log: Invalid Upload-Metadata
 
 === Block C16: POST with invalid Upload-Metadata 3
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -465,8 +478,10 @@ Upload-Metadata: testkey dGVzdHZhbA==,
 --- request
 POST /upload/
 --- error_code: 400
+--- error_log: Invalid Upload-Metadata
 
 === Block C17: POST with invalid Upload-Metadata 4
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -486,8 +501,9 @@ Upload-Metadata: testkey dGVzdHZhbA==,testkey2 testval*
 --- request
     POST /upload/
 --- error_code: 400
+--- error_log: Invalid Upload-Metadata
 
-=== Block C18: POST with valid Upload-Metadata 5
+=== Block C18: POST with valid Upload-Metadata
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -578,6 +594,7 @@ Upload-Defer-Length: 1
 --- error_code: 204
 
 === Block D4: HEAD on resource with Upload-Defer-Length with ext disabled
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -596,6 +613,7 @@ Tus-Resumable: 1.0.0
 --- request
     HEAD /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 403
+--- error_log: Ignoring resource due to disabled creation-defer-length
 
 === Block E1: PATCH without Content-Type
 --- config
@@ -689,6 +707,7 @@ Upload-Offset: 6
 --- error_code: 204
 
 === Block E5: PATCH chunk exceeding Upload-Length
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -710,6 +729,7 @@ Upload-Offset: 6
 PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 789012
 --- error_code: 409
+--- error_log: Upload-Offset + Content-Length exceeds Upload-Length
 
 === Block E6: PATCH last chunk
 --- config
@@ -762,6 +782,7 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 --- error_code: 204
 
 === Block E8: PATCH on Upload-Defer-Length without Upload-Length
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -783,8 +804,10 @@ Upload-Offset: 0
 PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 123456
 --- error_code: 409
+--- error_log: Invalid header: Upload-Length
 
 === Block E9: PATCH on Upload-Defer-Length with Upload-Length > Tus_Max_Size
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -808,8 +831,10 @@ Upload-Length: 1048577
 PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 12345678
 --- error_code: 413
+--- error_log: Upload-Length exceeds Tus-Max-Size
 
 === Block E10: PATCH on Upload-Defer-Length with ext disabled
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -833,6 +858,7 @@ Upload-Length: 20
 PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 12345678
 --- error_code: 403
+--- error_log: Ignoring resource due to disabled creation-defer-length
 
 === Block E11: PATCH on Upload-Defer-Length with valid Upload-Length
 --- config
@@ -1044,6 +1070,7 @@ DELETE /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- error_code: 404
 
 === Block G1: PATCH with badly encoded checksum
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -1066,8 +1093,10 @@ Upload-Offset: 0
 PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 1234567890123456789012345
 --- error_code: 400
+--- error_log: Invalid header: Upload-Checksum
 
 === Block G2: PATCH with unsupported checksum algorithm
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -1090,8 +1119,10 @@ Upload-Offset: 0
 PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 1234567890123456789012345
 --- error_code: 400
+--- error_log: Unsupported checksum algorithm: crc32
 
 === Block G3: PATCH with invalid MD5 checksum
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -1114,8 +1145,10 @@ Upload-Offset: 0
 PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 1234567890123456789012345
 --- error_code: 460
+--- error_log: Checksum mismatch
 
 === Block G4: PATCH with valid MD5 checksum without checksum extension
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -1139,6 +1172,7 @@ Upload-Offset: 0
 PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 1234567890123456789012345
 --- error_code: 400
+--- error_log: Upload-Checksum without checksum extension
 
 === Block G5: PATCH with valid MD5 checksum
 --- config
@@ -1168,6 +1202,7 @@ Upload-Offset: 25
 --- error_code: 204
 
 === Block G6: PATCH with invalid SHA1 checksum
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -1190,6 +1225,7 @@ Upload-Offset: 25
 PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 1234567890123456789012345
 --- error_code: 460
+--- error_log: Checksum mismatch
 
 === Block G7: PATCH with valid SHA1 checksum
 --- config
@@ -1219,6 +1255,7 @@ Upload-Offset: 25
 --- error_code: 204
 
 === Block G8: PATCH with invalid SHA256 checksum
+--- log_level: info
 --- config
     location /upload/ {
         content_by_lua_block {
@@ -1241,6 +1278,7 @@ Upload-Offset: 50
 PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 1234567890123456789012345
 --- error_code: 460
+--- error_log: Checksum mismatch
 
 === Block G9: PATCH with valid SHA256 checksum
 --- config

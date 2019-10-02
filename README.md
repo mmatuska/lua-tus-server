@@ -37,9 +37,7 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
 		tus.config.storage_backend_config.lock_zone = ngx.shared.tuslock
                 tus.config.resource_url_prefix = "https://myserver/upload"
 		tus.config.expire_timeout = 1209600
-		if not tus:process_request() then
-                    ngx.log("tus error: " .. tus.err)
-                end
+		tus:process_request()
 
                 if tus.resource.name and tus.resource.state == "completed" then
                     local path = tus.sb:get_path(tus.resource.name)
