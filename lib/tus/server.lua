@@ -228,23 +228,22 @@ function _M.process_request(self)
 	    if not sb:get_info(newresource) then break end
 	end
 	local info = {}
-	info["Upload-Length"] = ulen
-	info["Upload-Defer-Length"] = udefer
-	info["Upload-Metadata"] = metadata
+	info.size = ulen
+	info.defer = udefer
+	info.metadata = metadata
 	if extensions.expiration and self.config.expire_timeout > 0 then
-	    local secs = ngx.time() + self.config.expire_timeout
-	    info["Upload-Expires"] = ngx.http_time(secs)
+	    info.expires = ngx.time() + self.config.expire_timeout
 	end
 	local ret = sb:create(newresource, info)
 	if not ret then
 	    return interr(self, "Unable to create resource: " .. newresource)
 	else
 	    ngx.header["Location"] = self.config.resource_url_prefix .. "/" .. newresource
-	    if extensions.expiration and info["Upload-Expires"] then
-                ngx.header["Upload-Expires"] = info["Upload-Expires"]
+	    if extensions.expiration and info.expires then
+                ngx.header["Upload-Expires"] = ngx.http_time(info.expires)
 	    end
-	    if info["Upload-Defer-Length"] then
-	        ngx.header["Upload-Defer-Length"] = info["Upload-Defer-Length"]
+	    if info.defer then
+	        ngx.header["Upload-Defer-Length"] = info.defer
 	    end
             self.resource.name = newresource
 	    self.resource.state = "created"
@@ -263,14 +262,14 @@ function _M.process_request(self)
 
     -- For all following requests the resource must exist
     self.resource.info = sb:get_info(resource)
-    if not self.resource.info or not self.resource.info["Upload-Offset"] then
+    if not self.resource.info or not self.resource.info.offset then
        exit_status(ngx.HTTP_NOT_FOUND)
        return true
     end
 
-    if self.resource.info["Upload-Offset"] == 0 then
+    if self.resource.info.offset == 0 then
         self.resource.state = "empty"
-    elseif self.resource.info["Upload-Length"] == self.resource.info["Upload-Offset"] then
+    elseif self.resource.info.size == self.resource.info.offset then
         self.resource.state = "completed"
     else
         self.resource.state = "partial"
@@ -279,35 +278,34 @@ function _M.process_request(self)
     if method == "HEAD" then
 	-- If creation-defer-length is disabled, ignore such resources
 	if not extensions.creation_defer_length and
-	  self.resource.info["Upload-Defer-Length"] then
+	  self.resource.info.defer then
 	    exit_status(ngx.HTTP_FORBIDDEN)
 	    return true
 	end
         ngx.header["Cache-Control"] = "no_store"
-	if extensions.expiration and self.resource.info["Upload-Expires"] then
-	    local secs = ngx.parse_http_time(self.resource.info["Upload-Expires"])
-	    ngx.update_time()
-	    if secs and ngx.now() > secs then
+	local expires = self.resource.info.expires
+	if extensions.expiration and expires then
+	    if ngx.now() > expires then
 	        self.resource.state = "expired"
 	        exit_status(ngx.HTTP_GONE)
 		return true
 	    end
 	end
-        ngx.header["Upload-Offset"] = self.resource.info["Upload-Offset"]
-        if self.resource.info["Upload-Defer-Length"] then
+        ngx.header["Upload-Offset"] = self.resource.info.offset
+        if self.resource.info.defer then
             ngx.header["Upload-Defer-Length"] = 1
         end
-        if self.resource.info["Upload-Length"] then
-            ngx.header["Upload-Length"] = self.resource.info["Upload-Length"]
+        if self.resource.info.size then
+            ngx.header["Upload-Length"] = self.resource.info.size
         end
-        if self.resource.info["Upload-Metadata"] then
-            local metadata = encode_metadata(self.resource.info["Upload-Metadata"])
+        if self.resource.info.metadata then
+            local metadata = encode_metadata(self.resource.info.metadata)
             if metadata then
               ngx.header["Upload-Metadata"] = metadata
             end
         end
-	if extensions.expiration and self.resource.info["Upload-Expires"] then
-	    ngx.header["Upload-Expires"] = self.resource.info["Upload-Expires"]
+	if extensions.expiration and expires then
+	    ngx.header["Upload-Expires"] = ngx.http_time(expires)
 	end
         exit_status(ngx.HTTP_NO_CONTENT)
         return true
@@ -330,12 +328,12 @@ function _M.process_request(self)
 	    return true
 	end
 	local upload_offset = tonumber(headers["upload-offset"])
-	if not upload_offset or upload_offset ~= self.resource.info["Upload-Offset"] then
+	if not upload_offset or upload_offset ~= self.resource.info.offset then
 	    exit_status(ngx.HTTP_CONFLICT)
 	    return true
 	end
 	local upload_length
-	if self.resource.info["Upload-Defer-Length"] then
+	if self.resource.info.defer then
 	    if not extensions.creation_defer_length then
                 exit_status(ngx.HTTP_FORBIDDEN)
 		return true
@@ -350,13 +348,13 @@ function _M.process_request(self)
 	        exit_status(413) -- Request Entity Too Large
 		return true
 	    end
-	    self.resource.info["Upload-Defer-Length"] = nil
-	    self.resource.info["Upload-Length"] = upload_length
+	    self.resource.info.defer = nil
+	    self.resource.info.size = upload_length
 	    if not sb:update_info(resource, self.resource.info) then
 	        return interr(self, "Error updating resource metadata: " .. resource)
 	    end
         else
-	    upload_length = self.resource.info["Upload-Length"]
+	    upload_length = self.resource.info.size
 	end
 	local content_length = tonumber(headers["content-length"])
 	if not content_length or content_length < 0 then
@@ -397,8 +395,8 @@ function _M.process_request(self)
 	    exit_status(ngx.HTTP_CONFLICT)
 	    return true
 	end
-	if self.resource.info["Upload-Expires"] then
-	    local secs = ngx.parse_http_time(self.resource.info["Upload-Expires"])
+	if self.resource.info.expires then
+	    local secs = ngx.parse_http_time(self.resource.info.expires)
 	    ngx.update_time()
 	    if secs and ngx.now() > secs then
 	        self.resource.state = "expired"
@@ -457,13 +455,13 @@ function _M.process_request(self)
 	        return interr(self, "Error computing checksum: " .. resource)
 	    end
         end
-	self.resource.info["Upload-Offset"] = cur_offset
+	self.resource.info.offset = cur_offset
         ngx.header["Upload-Offset"] = cur_offset
 	if not sb:update_info(resource, self.resource.info) then
 	    return interr(self, "Error updating resource metadata: " .. resource)
         end
 	exit_status(ngx.HTTP_NO_CONTENT)
-	if cur_offset == self.resource.info["Upload-Length"] then
+	if cur_offset == self.resource.info.size then
 	    self.resource.state = "completed"
 	end
 	return true
