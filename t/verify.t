@@ -1,6 +1,6 @@
 use Test::Nginx::Socket::Lua;
 
-plan tests => 17;
+plan tests => 22;
 no_shuffle();
 run_tests();
 
