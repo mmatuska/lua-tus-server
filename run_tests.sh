@@ -3,6 +3,8 @@ DIR=./t/tus_temp
 set -e
 mkdir -p $DIR
 
+find $DIR -type f -exec rm {} \;
+
 # Create some resources
 echo '{"metadata":{"name":"test.txt","mimetype":"text/plain"},"offset":0,"size":10}' > $DIR/a25a7129d4e15fdce548ef0aad7a05b7.json
 touch $DIR/a25a7129d4e15fdce548ef0aad7a05b7
@@ -17,3 +19,4 @@ touch $DIR/91670d3adeda5cb3a4fd1c9884dab498
 
 # Run tests
 env TEST_NGINX_BINARY=/usr/local/openresty/bin/openresty perl t/suite.t
+env TEST_NGINX_BINARY=/usr/local/openresty/bin/openresty perl t/verify.t

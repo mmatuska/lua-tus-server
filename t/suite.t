@@ -9,12 +9,10 @@ __DATA__
 === Block A1: OPTIONS
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus:process_request()
+	}
     }
 --- request
 OPTIONS /upload/
@@ -28,12 +26,10 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 === Block A2: OPTIONS via X-Http-Method-Override
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus:process_request()
+	}
     }
 --- request
 GET /upload/
@@ -49,13 +45,11 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 === Block A3: OPTIONS with creation extension disabled
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
+	content_by_lua_block {
+	    local tus = require "tus.server"
 	    tus.config.extension.creation = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- request
 OPTIONS /upload/
@@ -69,13 +63,11 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 === Block A4: OPTIONS with checksum extension disabled
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
+	content_by_lua_block {
+	    local tus = require "tus.server"
 	    tus.config.extension.checksum = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- request
 OPTIONS /upload/
@@ -89,17 +81,15 @@ Tus-Extension: creation,creation-defer-length,expiration,termination
 === Block A5: OPTIONS with all extensions disabled
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
+	content_by_lua_block {
+	    local tus = require "tus.server"
 	    tus.config.extension.checksum = false
 	    tus.config.extension.creation = false
 	    tus.config.extension.creation_defer_length = false
 	    tus.config.extension.expiration = false
 	    tus.config.extension.termination = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- request
 OPTIONS /upload/
@@ -113,12 +103,10 @@ Tus-Version: 1.0.0
 === Block B1: Invalid method GET
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus:process_request()
+	}
     }
 --- request
 GET /upload/
@@ -127,12 +115,10 @@ GET /upload/
 === Block B2: Invalid method PUT
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus:process_request()
+	}
     }
 --- request
     PUT /upload/
@@ -141,13 +127,11 @@ GET /upload/
 === Block C1: POST without Tus-Resumable
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus:process_request()
+	}
     }
 --- request
 POST /upload/
@@ -156,13 +140,11 @@ POST /upload/
 === Block C2: POST with invalid Tus-Resumable
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 0.9.9
@@ -173,13 +155,11 @@ Tus-Resumable: 0.9.9
 === Block C3: POST only with valid Tus-Resumable
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -191,13 +171,11 @@ POST /upload/
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -210,15 +188,19 @@ Upload-Length: -1
 === Block C5: POST with zero Upload-Length
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		local file = io.open("./t/tus_temp/c5.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -227,21 +209,25 @@ Upload-Length: 0
 POST /upload/
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: http://localhost/upload/[\da-f]+
+Location: /upload/[\da-f]+
 --- error_code: 201
 
 === Block C6: POST with positive Upload-Length
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		local file = io.open("./t/tus_temp/c6.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -250,22 +236,20 @@ Upload-Length: 10
 POST /upload/
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: http://localhost/upload/[\da-f]+
+Location: /upload/[\da-f]+
 --- error_code: 201
 
 === Block C7: POST with creation disabled
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.creation = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -278,16 +262,14 @@ POST /upload/
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.max_size = 1048576
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -301,15 +283,13 @@ POST /upload/
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -324,15 +304,13 @@ POST /upload/
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -345,15 +323,19 @@ Upload-Defer-Length: abc
 === Block C11: POST with valid Upload-Defer-Length
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		    local file = io.open("./t/tus_temp/c11.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -362,22 +344,21 @@ Upload-Defer-Length: 1
 POST /upload/
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: http://localhost/upload/[\da-f]+
+Location: /upload/[\da-f]+
 --- error_code: 201
 
 === Block C12: POST with Upload-Defer-Length and creation-defer-length disabled
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.creation_defer_length = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	    
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -389,16 +370,20 @@ POST /upload/
 === Block C13: POST returning Upload-Expires
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config["expire_timeout"] = 3600
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		    local file = io.open("./t/tus_temp/c13.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -408,22 +393,20 @@ POST /upload/
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
 Upload-Expires: (Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d\d (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d\d\d\d \d\d:\d\d:\d\d GMT
-Location: http://localhost/upload/[\da-f]+
+Location: /upload/[\da-f]+
 --- error_code: 201
 
 === Block C14: POST with invalid Upload-Metadata 1
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -438,15 +421,13 @@ POST /upload/
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -461,15 +442,13 @@ Upload-Metadata: testkey dGVzdHZhbA== aa
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -484,15 +463,13 @@ POST /upload/
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -506,15 +483,19 @@ Upload-Metadata: testkey dGVzdHZhbA==,testkey2 testval*
 === Block C18: POST with valid Upload-Metadata
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		    local file = io.open("./t/tus_temp/c18.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -522,7 +503,7 @@ Upload-Length: 10
 Upload-Metadata: testkey dGVzdHZhbA==,testkey2 dGVzdHZhbDI=
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: http://localhost/upload/[\da-f]+
+Location: /upload/[\da-f]+
 --- request
 POST /upload/
 --- error_code: 201
@@ -530,15 +511,13 @@ POST /upload/
 === Block D1: HEAD on non-existing resource
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -549,15 +528,13 @@ HEAD /upload/1234567890
 === Block D2: HEAD on existing resource
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -573,15 +550,13 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 === Block D3: HEAD on resource with Upload-Defer-Length
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -597,16 +572,14 @@ Upload-Defer-Length: 1
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.creation_defer_length = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -618,15 +591,13 @@ Tus-Resumable: 1.0.0
 === Block E1: PATCH without Content-Type
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -639,15 +610,13 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 === Block E2: PATCH with invalid Content-Type
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -661,15 +630,13 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 === Block E3: PATCH without Upload-Offset
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -683,15 +650,13 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 === Block E4: PATCH first chunk
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -710,15 +675,13 @@ Upload-Offset: 6
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -734,15 +697,13 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 === Block E6: PATCH last chunk
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -760,15 +721,13 @@ Upload-Offset: 10
 === Block E7: HEAD on completed upload
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -785,15 +744,13 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -810,16 +767,14 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.max_size = 1048576
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -837,16 +792,14 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.creation_defer_length = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -863,15 +816,13 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 === Block E11: PATCH on Upload-Defer-Length with valid Upload-Length
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -890,15 +841,13 @@ Upload-Offset: 8
 === Block E12: HEAD on partial upload
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -913,15 +862,13 @@ Upload-Length: 20
 === Block E13: HEAD on expired upload
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -932,16 +879,14 @@ HEAD /upload/c29e4d9b20fb6495843de87b2f508826
 === Block E14: HEAD on expired upload without expiration extension
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.expiration = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -956,16 +901,14 @@ Upload-Offset: 0
 === Block F1: DELETE on existing resource without termination extension
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.termination = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -976,15 +919,13 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 === Block F2: DELETE on existing resource
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -995,15 +936,13 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 === Block F3: DELETE on already deleted resource
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1014,15 +953,13 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 === Block F4: DELETE on non-existing resource
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1033,16 +970,14 @@ DELETE /upload/12345678
 === Block F5: DELETE on existing resource with hard_delete 
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.hard_delete = true
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1053,15 +988,13 @@ DELETE /upload/a25a7129d4e15fdce548ef0aad7a05b7
 === Block F6: DELETE on resource already hard deleted
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1073,15 +1006,13 @@ DELETE /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1099,15 +1030,13 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1125,15 +1054,13 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1151,16 +1078,14 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus.config.extension.checksum = false
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1177,15 +1102,13 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 === Block G5: PATCH with valid MD5 checksum
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1205,15 +1128,13 @@ Upload-Offset: 25
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1230,15 +1151,13 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 === Block G7: PATCH with valid SHA1 checksum
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1258,15 +1177,13 @@ Upload-Offset: 25
 --- log_level: info
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1283,15 +1200,13 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 === Block G9: PATCH with valid SHA256 checksum
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
@@ -1310,16 +1225,14 @@ Upload-Offset: 25
 === Block G10: PATCH with SHA256 sum and internal multi-chunk
 --- config
     location /upload/ {
-        content_by_lua_block {
-            local tus = require "tus.server"
-            tus.config.resource_url_prefix = "http://localhost/upload"
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
 	    tus.config.chunk_size = 100
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
-            if not tus:process_request() then
-                ngx.log("tus error: " .. tus.err)
-            end
-        }
+	    tus:process_request()
+	}
     }
 --- more_headers
 Tus-Resumable: 1.0.0
