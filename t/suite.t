@@ -1,6 +1,6 @@
 use Test::Nginx::Socket::Lua;
 
-plan tests => 131;
+plan tests => 186;
 no_shuffle();
 run_tests();
 
@@ -19,7 +19,7 @@ OPTIONS /upload/
 --- response_headers
 Tus-Resumable: 1.0.0
 Tus-Version: 1.0.0
-Tus-Extension: checksum,creation,creation-defer-length,expiration,termination
+Tus-Extension: checksum,concatenation,concatenation-unfinished,creation,creation-defer-length,expiration,termination
 Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
 
@@ -38,7 +38,7 @@ X-Http-Method-Override: OPTIONS
 --- response_headers
 Tus-Resumable: 1.0.0
 Tus-Version: 1.0.0
-Tus-Extension: checksum,creation,creation-defer-length,expiration,termination
+Tus-Extension: checksum,concatenation,concatenation-unfinished,creation,creation-defer-length,expiration,termination
 Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
 
@@ -56,7 +56,25 @@ OPTIONS /upload/
 --- response_headers
 Tus-Resumable: 1.0.0
 Tus-Version: 1.0.0
-Tus-Extension: checksum,expiration,termination
+Tus-Extension: checksum,concatenation,concatenation-unfinished,expiration,termination
+Tus-Checksum-Algorithm: md5,sha1,sha256
+--- error_code: 204
+
+=== Block A4: OPTIONS with concatenation extension disabled
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.extension.concatenation = false
+	    tus:process_request()
+	}
+    }
+--- request
+OPTIONS /upload/
+--- response_headers
+Tus-Resumable: 1.0.0
+Tus-Version: 1.0.0
+Tus-Extension: checksum,creation,creation-defer-length,expiration,termination
 Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
 
@@ -74,7 +92,7 @@ OPTIONS /upload/
 --- response_headers
 Tus-Resumable: 1.0.0
 Tus-Version: 1.0.0
-Tus-Extension: creation,creation-defer-length,expiration,termination
+Tus-Extension: concatenation,concatenation-unfinished,creation,creation-defer-length,expiration,termination
 !Tus-Checksum-Algorithm
 --- error_code: 204
 
@@ -84,6 +102,8 @@ Tus-Extension: creation,creation-defer-length,expiration,termination
 	content_by_lua_block {
 	    local tus = require "tus.server"
 	    tus.config.extension.checksum = false
+	    tus.config.extension.concatenation = false
+	    tus.config.extension.concatenation_unfinished = false
 	    tus.config.extension.creation = false
 	    tus.config.extension.creation_defer_length = false
 	    tus.config.extension.expiration = false
@@ -165,7 +185,7 @@ Tus-Resumable: 0.9.9
 Tus-Resumable: 1.0.0
 --- request
 POST /upload/
---- error_code: 400
+--- error_code: 411
 
 === Block C4: POST with negative Upload-Length
 --- log_level: info
@@ -508,6 +528,287 @@ Location: /upload/[\da-f]+
 POST /upload/
 --- error_code: 201
 
+=== Block C19: POST with invalid Upload-Concat
+--- log_level: info
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Length: 10
+Upload-Concat: test
+--- request
+POST /upload/
+--- error_code: 400
+--- error_log: Invalid Upload-Concat
+
+=== Block C20: POST with valid partial Upload-Concat and disabled extension
+--- log_level: info
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.concatenation = false
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Length: 10
+Upload-Concat: partial
+--- request
+POST /upload/
+--- error_code: 400
+--- error_log: Received Upload-Concat with disabled extension
+
+=== Block C21: POST with valid partial Upload-Concat
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		    local file = io.open("./t/tus_temp/c21.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Length: 10
+Upload-Concat: partial
+--- response_headers_like
+Tus-Resumable: 1\.0\.0
+Location: /upload/[\da-f]+
+--- request
+POST /upload/
+--- error_code: 201
+
+=== Block C22: POST with valid partial Upload-Concat and Upload-Defer-Length
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		    local file = io.open("./t/tus_temp/c22.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Defer-Length: 1
+Upload-Concat: partial
+--- response_headers_like
+Tus-Resumable: 1\.0\.0
+Upload-Defer-Length: 1
+Location: /upload/[\da-f]+
+--- request
+POST /upload/
+--- error_code: 201
+
+=== Block C23: POST with final Upload-Concat and non-existing resource
+--- log_level: info
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;12345678
+--- request
+POST /upload/
+--- error_code: 412
+--- error_log: Upload-Concat with non-existing resource
+
+=== Block C24: POST with final Upload-Concat and non-existing resource 2
+--- log_level: info
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f /upload/12345678
+--- request
+POST /upload/
+--- error_code: 412
+--- error_log: Upload-Concat with non-existing resource
+
+
+=== Block C25: POST with final Upload-Concat and non-partial resource
+--- log_level: info
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;/upload/91670d3adeda5cb3a4fd1c9884dab498
+--- request
+POST /upload/
+--- error_code: 412
+--- error_log: Upload-Concat with non-partial resource
+
+=== Block C26: POST with final Upload-Concat and a non-partial resource 2
+--- log_level: info
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f /upload/91670d3adeda5cb3a4fd1c9884dab498
+--- request
+POST /upload/
+--- error_code: 412
+--- error_log: Upload-Concat with non-partial resource
+
+=== Block C27: POST with valid final Upload-Concat without concatenation-unfinished
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.concatenation_unfinished = false
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f
+--- request
+POST /upload/
+--- error_code: 412
+
+=== Block C28: POST with valid final Upload-Concat and one resource
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		    local file = io.open("./t/tus_temp/c28.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f
+--- response_headers_like
+Tus-Resumable: 1\.0\.0
+Location: /upload/[\da-f]+
+--- request
+POST /upload/
+--- error_code: 201
+
+=== Block C29: POST with valid final Upload-Concat and two resources
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		    local file = io.open("./t/tus_temp/c29.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f /upload/7a845f10fd7696b9df8b13c328c34c52
+--- response_headers_like
+Tus-Resumable: 1\.0\.0
+Location: /upload/[\da-f]+
+--- request
+POST /upload/
+--- error_code: 201
+
+=== Block C30: POST with valid final Upload-Concat and a deferred resource
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+	        local file = io.open("./t/tus_temp/c30.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f /upload/03720362b6571cfffd17adfffb565375
+--- response_headers_like
+Tus-Resumable: 1\.0\.0
+Location: /upload/[\da-f]+
+--- request
+POST /upload/
+--- error_code: 201
+
 === Block D1: HEAD on non-existing resource
 --- config
     location /upload/ {
@@ -545,6 +846,8 @@ Tus-Resumable: 1.0.0
 Upload-Offset: 0
 Upload-Length: 10
 Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
+!Upload-Defer-Length
+!Upload-Concat
 --- error_code: 204
 
 === Block D3: HEAD on resource with Upload-Defer-Length
@@ -566,6 +869,8 @@ Tus-Resumable: 1.0.0
 Tus-Resumable: 1.0.0
 Upload-Offset: 0
 Upload-Defer-Length: 1
+!Upload-Length
+!Upload-Concat
 --- error_code: 204
 
 === Block D4: HEAD on resource with Upload-Defer-Length with ext disabled
@@ -586,7 +891,48 @@ Tus-Resumable: 1.0.0
 --- request
     HEAD /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 403
---- error_log: Ignoring resource due to disabled creation-defer-length
+--- error_log: Disclosing resource due to disabled creation-defer-length
+
+=== Block D5: HEAD on unfinished Upload-Concat without concatenation-unfinished
+--- log_level: info
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.concatenation_unfinished = false
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+--- request
+    HEAD /upload/12ca7f9a120c9919f8882096f9bd2bc4
+--- error_code: 403
+--- error_log: Disclosing resource due to disabled concatenation-unfinished
+
+=== Block D6: HEAD on unfinished Upload-Concat with concatenation-unfinished
+--- log_level: info
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+--- request
+    HEAD /upload/12ca7f9a120c9919f8882096f9bd2bc4
+--- response_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;/upload/7a845f10fd7696b9df8b13c328c34c52 /upload/03720362b6571cfffd17adfffb565375
+--- error_code: 204
 
 === Block E1: PATCH without Content-Type
 --- config
@@ -738,6 +1084,8 @@ Tus-Resumable: 1.0.0
 Upload-Offset: 10
 Upload-Length: 10
 Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
+!Upload-Defer-Length
+!Upload-Concat
 --- error_code: 204
 
 === Block E8: PATCH on Upload-Defer-Length without Upload-Length
@@ -857,6 +1205,8 @@ HEAD /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 Tus-Resumable: 1.0.0
 Upload-Offset: 8
 Upload-Length: 20
+!Upload-Defer-Length
+!Upload-Concat
 --- error_code: 204
 
 === Block E13: HEAD on expired upload
@@ -896,6 +1246,8 @@ HEAD /upload/c29e4d9b20fb6495843de87b2f508826
 Tus-Resumable: 1.0.0
 Upload-Length: 10
 Upload-Offset: 0
+!Upload-Defer-Length
+!Upload-Concat
 --- error_code: 204
 
 === Block F1: DELETE on existing resource without termination extension
@@ -1256,3 +1608,106 @@ PATCH /upload/91670d3adeda5cb3a4fd1c9884dab498
 Tus-Resumable: 1.0.0
 Upload-Offset: 500
 --- error_code: 204
+
+=== Block H1: PATCH against final Upload-Concat
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Content-Length: 6
+Content-Type: application/offset+octet-stream
+Upload-Offset: 0
+--- request
+PATCH /upload/12ca7f9a120c9919f8882096f9bd2bc4
+123456
+--- error_code: 403
+
+=== Block H2: PATCH against partial Upload-Concat
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Content-Length: 200
+Content-Type: application/offset+octet-stream
+Upload-Offset: 0
+--- request
+PATCH /upload/7a845f10fd7696b9df8b13c328c34c52
+1234567890123456789012345678901234567890123456789
+1234567890123456789012345678901234567890123456789
+1234567890123456789012345678901234567890123456789
+12345678901234567890123456789012345678901234567890
+--- respose_headers
+Tus-Resumable: 1.0.0
+Upload-Offset: 200
+--- error_code: 204
+
+=== Block H3: PATCH against deferred partial Upload-Concat
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Length: 150
+Content-Length: 150
+Content-Type: application/offset+octet-stream
+Upload-Offset: 0
+--- request
+PATCH /upload/d4d0bf5e0c5fae7b1a900a972010cd58
+1234567890123456789012345678901234567890123456789
+1234567890123456789012345678901234567890123456789
+12345678901234567890123456789012345678901234567890
+--- respose_headers
+Tus-Resumable: 1.0.0
+Upload-Offset: 150
+--- error_code: 204
+
+=== Block H4: POST with valid final Upload-Concat without concatenation-unfinished 2
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.resource_url_prefix = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus.config.extension.concatenation_unfinished = false
+	    tus:process_request()
+
+	    if ngx.resp.get_headers()["Location"] then
+		local file = io.open("./t/tus_temp/h4.location","w")
+		file:write(ngx.resp.get_headers()["Location"])
+		file:close()
+	    end
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Concat: final;/upload/7a845f10fd7696b9df8b13c328c34c52 /upload/d4d0bf5e0c5fae7b1a900a972010cd58
+--- response_headers_like
+Tus-Resumable: 1\.0\.0
+Location: /upload/[\da-f]+
+--- request
+POST /upload/
+--- error_code: 201

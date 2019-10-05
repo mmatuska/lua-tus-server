@@ -16,6 +16,16 @@ echo '{"offset":0,"size":75}' > $DIR/b0aeb37004e0480f15c60f650ee92e02.json
 touch $DIR/b0aeb37004e0480f15c60f650ee92e02
 echo '{"offset":0,"size":1000}' > $DIR/91670d3adeda5cb3a4fd1c9884dab498.json
 touch $DIR/91670d3adeda5cb3a4fd1c9884dab498
+echo '{"offset":0,"size":100,"concat":true}' > $DIR/69ae186b699db22960f9d93b7068e67f.json
+touch $DIR/69ae186b699db22960f9d93b7068e67f
+echo '{"offset":0,"size":200,"concat":true}'> $DIR/7a845f10fd7696b9df8b13c328c34c52.json
+touch $DIR/7a845f10fd7696b9df8b13c328c34c52
+echo '{"offset":0,"defer":1,"concat":true}' > $DIR/03720362b6571cfffd17adfffb565375.json
+touch $DIR/7a845f10fd7696b9df8b13c328c34c52
+echo '{"offset":0,"defer":1,"concat":true}' > $DIR/d4d0bf5e0c5fae7b1a900a972010cd58.json
+touch $DIR/d4d0bf5e0c5fae7b1a900a972010cd58
+echo '{"offset":0,"concat":["7a845f10fd7696b9df8b13c328c34c52","03720362b6571cfffd17adfffb565375"]}' > $DIR/12ca7f9a120c9919f8882096f9bd2bc4.json
+touch $DIR/12ca7f9a120c9919f8882096f9bd2bc4
 
 # Run tests
 env TEST_NGINX_BINARY=/usr/local/openresty/bin/openresty perl t/suite.t

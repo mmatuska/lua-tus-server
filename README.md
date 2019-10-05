@@ -7,6 +7,8 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
 - [tus protocol 1.0.0](https://tus.io/protocols/resumable-upload.html)
 - tus extensions:
   - checksum (md5, sha1, sha256)
+  - concatenation
+  - concatenation-unfinished
   - creation
   - creation-defer-length
   - expiration
@@ -48,6 +50,10 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
         }
     }
 ```
+
+## Todo
+
+- concatenation does not merge the resources yet
 
 ## License
 MIT

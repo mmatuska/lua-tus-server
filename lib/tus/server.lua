@@ -19,6 +19,8 @@ _M.config = {
   hard_delete=false,
   extension = {
     checksum=true,
+    concatenation=true,
+    concatenation_unfinished=true,
     creation=true,
     creation_defer_length=true,
     expiration=true,
@@ -135,6 +137,11 @@ function _M.process_request(self)
 
     -- Store extension support
     local extensions = self.config.extension
+    -- Autodisable concatenation-unfinished if concatenation is disabled
+    if not extensions.concatenation then
+	ngx.log(ngx.NOTICE, "Auto-disabling concatenation-unfinished extension")
+	extensions.concatenation_unfinished = false
+    end
     -- Autodisable creation-defer-length if creation is disabled
     if not extensions.creation then
 	ngx.log(ngx.NOTICE, "Auto-disabling creation-defer-length extension")
@@ -192,22 +199,85 @@ function _M.process_request(self)
     end
 
     if method == "POST" then
-	local ulen
+	local ulen = false
 	if headers["upload-length"] then
 	    ulen = tonumber(headers["upload-length"])
-	else
-	    ulen = false
 	end
-	local udefer
-	-- Ignore Upload-Defer-Length if not supported
-	if extensions.creation_defer_length then
-	    if headers["upload-defer-length"] then
+	local udefer = false
+	if headers["upload-defer-length"] then
+	    if extensions.creation_defer_length then
 		udefer = tonumber(headers["upload-defer-length"])
 	    else
-		udefer = false
+		ngx.log(ngx.INFO, "Received Upload-Defer-Length with disabled extension")
+		exit_status(ngx.HTTP_BAD_REQUEST)
+		return true
 	    end
-	else
-	    udefer = false
+	end
+	local concat = false
+	if headers["upload-concat"] then
+	    if extensions.concatenation then
+		local conhdr = headers["upload-concat"]
+		if conhdr:sub(1,6) == "final;" then
+		    local cr = split(conhdr:sub(7), " ")
+		    if cr then
+			local size = 0
+			concat = {}
+			for _, url in pairs(cr) do
+			    local r = url:sub(self.config.resource_url_prefix:len() + 2)
+			    local ri = sb:get_info(r)
+			    local e = false
+			    if not ri then
+				ngx.log(ngx.INFO, "Upload-Concat with non-existing resource")
+				e = true
+			    elseif ri.deleted then
+				ngx.log(ngx.INFO, "Upload-Concat with deleted resource")
+				e = true
+			    elseif type(ri.concat) ~= "boolean" or ri.concat ~= true then
+				ngx.log(ngx.INFO, "Upload-Concat with non-partial resource")
+				e = true
+			    elseif not extensions.concatenation_unfinished and
+			      (not ri.offset or not ri.size or ri.offset ~= ri.size) then
+				ngx.log(ngx.INFO, "Upload-Concat with unfinished upload")
+				e = true
+			    end
+			    if e then
+				exit_status(412) -- Precondition Failed
+				return true
+			    end
+			    if size ~= false and ri.size then
+				size = size + ri.size
+			    else
+				size = false
+			    end
+			    table.insert(concat, r)
+			end
+			if udefer then
+			    ngx.log(ngx.INFO, "Rejecting final Upload-Concat with Upload-Defer-Length")
+			    exit_status(ngx.HTTP_BAD_REQUEST)
+			    return true
+			end
+			if ulen ~= false then
+			    ngx.log(ngx.INFO, "Rejecting final Upload-Concat with Upload-Size")
+			    exit_status(ngx.HTTP_BAD_REQUEST)
+			    return true
+			end
+			if size ~= false then
+			    ulen = size
+			end
+		    end
+		elseif conhdr == "partial" then
+		    concat = true
+		end
+		if not concat then
+		    ngx.log(ngx.INFO, "Invalid Upload-Concat")
+		    exit_status(ngx.HTTP_BAD_REQUEST)
+		    return true
+		end
+	    else
+		ngx.log(ngx.INFO, "Received Upload-Concat with disabled extension")
+		exit_status(ngx.HTTP_BAD_REQUEST)
+		return true
+	    end
 	end
 	local umeta = headers["upload-metadata"]
 	local metadata = nil
@@ -217,9 +287,10 @@ function _M.process_request(self)
 	if udefer ~= false and udefer ~= 1 then
 	    ngx.log(ngx.INFO, "Invalid Upload-Defer-Length")
 	    bad_request = true
-	elseif not ulen and not udefer then
+	elseif not ulen and not udefer and type(concat) ~= "table" then
 	    ngx.log(ngx.INFO, "Received neither Upload-Length nor Upload-Defer-Length")
-	    bad_request = true
+	    exit_status(411) -- Length Required
+	    return true
 	elseif ulen and udefer then
 	    ngx.log(ngx.INFO, "Received both Upload-Length and Upload-Defer-Length")
 	    bad_request = true
@@ -251,6 +322,9 @@ function _M.process_request(self)
 	    if not sb:get_info(newresource) then break end
 	end
 	local info = {}
+	if concat ~= false then
+	    info.concat = concat
+	end
 	info.offset = 0
 	if ulen ~= false then
 	    info.size = ulen
@@ -296,9 +370,13 @@ function _M.process_request(self)
        exit_status(ngx.HTTP_NOT_FOUND)
        return true
     end
-    -- If the resource is marked as deleted, return 410
-    if self.resource.info.deleted then
-	self.resource.state = "deleted"
+    -- If the resource is marked as deleted or invalid, return 410
+    if self.resource.info.deleted or self.resource.info.invalid then
+	if self.resource.info.deleted then
+	    self.resource.state = "deleted"
+	else
+	    self.resource.state = "invalid"
+	end
 	exit_status(ngx.HTTP_GONE)
 	return true
     end
@@ -308,16 +386,87 @@ function _M.process_request(self)
     elseif self.resource.info.size == self.resource.info.offset then
 	self.resource.state = "completed"
     else
-	self.resource.state = "partial"
+	self.resource.state = "in_progress"
     end
 
     if method == "HEAD" then
-	-- If creation-defer-length is disabled, ignore such resources
-	if not extensions.creation_defer_length and
-	  self.resource.info.defer then
-	    ngx.log(ngx.INFO, "Ignoring resource due to disabled creation-defer-length")
+	-- If concatenation is disabled we don't report such resources
+	if not extensions.concatenation and
+	  self.resource.info.concat then
+	    ngx.log(ngx.INFO, "Disclosing resource due to disabled concatenation")
 	    exit_status(ngx.HTTP_FORBIDDEN)
 	    return true
+	end
+	-- If creation-defer-length is disabled we don't reportsuch resources
+	if not extensions.creation_defer_length and
+	  self.resource.info.defer then
+	    ngx.log(ngx.INFO, "Disclosing resource due to disabled creation-defer-length")
+	    exit_status(ngx.HTTP_FORBIDDEN)
+	    return true
+	end
+	if self.resource.info.concat then
+	    if type(self.resource.info.concat) == "boolean" and
+	      self.resource.info.concat == true then
+		ngx.header["Upload-Concat"] = "partial"
+	    elseif type(self.resource.info.concat) == "table" then
+		local conhdr = "final;"
+		local first = true
+		local size = 0
+		local complete = 0
+		for _, v in pairs(self.resource.info.concat) do
+		    local ri = sb:get_info(v)
+		    if size ~= false and ri.size then
+			size = size + ri.size
+			if ri.size == ri.offset then
+			    complete = complete + ri.size
+			end
+		    else
+			complete = false
+			size = false
+		    end
+		    if not ri or ri.deleted or type(ri.concat) ~= "boolean" or ri.concat ~= true then
+			--- We have to mark the final concat as deleted
+			ngx.log(ngx.NOTICE, "Invalidating concat due to non-existent or invalid part")
+			self.resource.info.invalid = true
+			if not sb:update_info(resource, self.resource.info) then
+			    ngx.log(ngx.ERR, "Error updating resource metadata: " .. resource)
+			    return interr()
+			end
+			exit_status(ngx.HTTP_GONE)
+			return true
+		    end
+		    if first then
+			first = false
+		    else
+			conhdr = conhdr .. " "
+		    end
+		    conhdr = conhdr .. self.config.resource_url_prefix .. "/" .. v
+		end
+		local infoupdate = false
+		if size ~= false and size ~= self.resource.info.size then
+		    self.resource.info.size = size
+		    infoupdate = true
+		end
+		if size ~= false and size == complete then
+		    self.resource.info.offset = size
+		    infoupdate = true
+	        else
+		    if not extensions.concatenation_unfinished then
+			ngx.log(ngx.INFO, "Disclosing resource due to disabled concatenation-unfinished")
+			exit_status(ngx.HTTP_FORBIDDEN)
+			return true
+		    end
+		    self.resource.info.offset = nil
+		end
+		if infoupdate then
+		    ngx.log(ngx.INFO, "Updating final Upload-Concat info: " .. resource)
+		    if not sb:update_info(resource, self.resource.info) then
+			ngx.log(ngx.ERR, "Error updating resource metadata: " .. resource)
+			return interr()
+		    end
+		end
+		ngx.header["Upload-Concat"] = conhdr
+	    end
 	end
 	ngx.header["Cache-Control"] = "no_store"
 	local expires = self.resource.info.expires
@@ -328,7 +477,9 @@ function _M.process_request(self)
 		return true
 	    end
 	end
-	ngx.header["Upload-Offset"] = self.resource.info.offset
+	if self.resource.info.offset then
+	    ngx.header["Upload-Offset"] = self.resource.info.offset
+	end
 	if self.resource.info.defer then
 	    ngx.header["Upload-Defer-Length"] = 1
 	end
@@ -364,6 +515,12 @@ function _M.process_request(self)
     end
 
     if method == "PATCH" then
+	--- Patch against final Upload-Concat is not allowed
+	if self.resource.info.concat and
+	  type(self.resource.info.concat) == "table" then
+	    exit_status(ngx.HTTP_FORBIDDEN)
+	    return true
+	end
 	if headers["content-type"] ~= "application/offset+octet-stream" then
 	    ngx.log(ngx.INFO, "Invalid or missing header: Content-Type")
 	    exit_status(415) -- Unsupported Media Type
