@@ -213,7 +213,8 @@ function _M.process_request(self)
 		return true
 	    end
 	end
-	local concat = false
+	local concat_partial = false
+	local concat_final = false
 	if headers["upload-concat"] then
 	    if extensions.concatenation then
 		local conhdr = headers["upload-concat"]
@@ -221,7 +222,7 @@ function _M.process_request(self)
 		    local cr = split(conhdr:sub(7), " ")
 		    if cr then
 			local size = 0
-			concat = {}
+			concat_final = {}
 			for _, url in pairs(cr) do
 			    local r = url:sub(self.config.resource_url_prefix:len() + 2)
 			    local ri = sb:get_info(r)
@@ -232,7 +233,7 @@ function _M.process_request(self)
 			    elseif ri.deleted then
 				ngx.log(ngx.INFO, "Upload-Concat with deleted resource")
 				e = true
-			    elseif type(ri.concat) ~= "boolean" or ri.concat ~= true then
+			    elseif not ri.concat_partial or ri.concat_partial ~= true then
 				ngx.log(ngx.INFO, "Upload-Concat with non-partial resource")
 				e = true
 			    elseif not extensions.concatenation_unfinished and
@@ -249,7 +250,7 @@ function _M.process_request(self)
 			    else
 				size = false
 			    end
-			    table.insert(concat, r)
+			    table.insert(concat_final, r)
 			end
 			if udefer then
 			    ngx.log(ngx.INFO, "Rejecting final Upload-Concat with Upload-Defer-Length")
@@ -266,9 +267,9 @@ function _M.process_request(self)
 			end
 		    end
 		elseif conhdr == "partial" then
-		    concat = true
+		    concat_partial = true
 		end
-		if not concat then
+		if not concat_partial and not concat_final then
 		    ngx.log(ngx.INFO, "Invalid Upload-Concat")
 		    exit_status(ngx.HTTP_BAD_REQUEST)
 		    return true
@@ -284,19 +285,21 @@ function _M.process_request(self)
 	local newresource
 	local rnd
 	local bad_request = false
-	if udefer ~= false and udefer ~= 1 then
-	    ngx.log(ngx.INFO, "Invalid Upload-Defer-Length")
-	    bad_request = true
-	elseif not ulen and not udefer and type(concat) ~= "table" then
-	    ngx.log(ngx.INFO, "Received neither Upload-Length nor Upload-Defer-Length")
-	    exit_status(411) -- Length Required
-	    return true
-	elseif ulen and udefer then
-	    ngx.log(ngx.INFO, "Received both Upload-Length and Upload-Defer-Length")
-	    bad_request = true
-	elseif ulen and ulen < 0 then
-	    ngx.log(ngx.INFO, "Received negative Upload-Length")
-	    bad_request = true
+	if not concat_final then
+	    if udefer ~= false and udefer ~= 1 then
+		ngx.log(ngx.INFO, "Invalid Upload-Defer-Length")
+		bad_request = true
+	    elseif not ulen and not udefer then
+		ngx.log(ngx.INFO, "Received neither Upload-Length nor Upload-Defer-Length")
+		exit_status(411) -- Length Required
+		return true
+	    elseif ulen and udefer then
+		ngx.log(ngx.INFO, "Received both Upload-Length and Upload-Defer-Length")
+		bad_request = true
+	    elseif ulen and ulen < 0 then
+		ngx.log(ngx.INFO, "Received negative Upload-Length")
+		bad_request = true
+	    end
 	end
 	if bad_request then
 	    exit_status(ngx.HTTP_BAD_REQUEST)
@@ -322,8 +325,11 @@ function _M.process_request(self)
 	    if not sb:get_info(newresource) then break end
 	end
 	local info = {}
-	if concat ~= false then
-	    info.concat = concat
+	if concat_partial then
+	    info.concat_partial = concat_partial
+	end
+	if concat_final then
+	    info.concat_final = concat_final
 	end
 	info.offset = 0
 	if ulen ~= false then
@@ -392,7 +398,7 @@ function _M.process_request(self)
     if method == "HEAD" then
 	-- If concatenation is disabled we don't report such resources
 	if not extensions.concatenation and
-	  self.resource.info.concat then
+	  (self.resource.info.concat_partial or self.resource.info.concat_final) then
 	    ngx.log(ngx.INFO, "Disclosing resource due to disabled concatenation")
 	    exit_status(ngx.HTTP_FORBIDDEN)
 	    return true
@@ -404,69 +410,66 @@ function _M.process_request(self)
 	    exit_status(ngx.HTTP_FORBIDDEN)
 	    return true
 	end
-	if self.resource.info.concat then
-	    if type(self.resource.info.concat) == "boolean" and
-	      self.resource.info.concat == true then
-		ngx.header["Upload-Concat"] = "partial"
-	    elseif type(self.resource.info.concat) == "table" then
-		local conhdr = "final;"
-		local first = true
-		local size = 0
-		local complete = 0
-		for _, v in pairs(self.resource.info.concat) do
-		    local ri = sb:get_info(v)
-		    if size ~= false and ri.size then
-			size = size + ri.size
-			if ri.size == ri.offset then
-			    complete = complete + ri.size
-			end
-		    else
-			complete = false
-			size = false
+	if self.resource.info.concat_partial and self.resource.info.concat_partial == true then
+	    ngx.header["Upload-Concat"] = "partial"
+	elseif self.resource.info.concat_final then
+	    local conhdr = "final;"
+	    local first = true
+	    local size = 0
+	    local complete = 0
+	    for _, v in pairs(self.resource.info.concat_final) do
+		local ri = sb:get_info(v)
+		if size ~= false and ri.size then
+		    size = size + ri.size
+		    if ri.size == ri.offset then
+			complete = complete + ri.size
 		    end
-		    if not ri or ri.deleted or type(ri.concat) ~= "boolean" or ri.concat ~= true then
-			--- We have to mark the final concat as deleted
-			ngx.log(ngx.NOTICE, "Invalidating concat due to non-existent or invalid part")
-			self.resource.info.invalid = true
-			if not sb:update_info(resource, self.resource.info) then
-			    ngx.log(ngx.ERR, "Error updating resource metadata: " .. resource)
-			    return interr()
-			end
-			exit_status(ngx.HTTP_GONE)
-			return true
-		    end
-		    if first then
-			first = false
-		    else
-			conhdr = conhdr .. " "
-		    end
-		    conhdr = conhdr .. self.config.resource_url_prefix .. "/" .. v
+		else
+		    complete = false
+		    size = false
 		end
-		local infoupdate = false
-		if size ~= false and size ~= self.resource.info.size then
-		    self.resource.info.size = size
-		    infoupdate = true
-		end
-		if size ~= false and size == complete then
-		    self.resource.info.offset = size
-		    infoupdate = true
-	        else
-		    if not extensions.concatenation_unfinished then
-			ngx.log(ngx.INFO, "Disclosing resource due to disabled concatenation-unfinished")
-			exit_status(ngx.HTTP_FORBIDDEN)
-			return true
-		    end
-		    self.resource.info.offset = nil
-		end
-		if infoupdate then
-		    ngx.log(ngx.INFO, "Updating final Upload-Concat info: " .. resource)
+		if not ri or ri.deleted or not ri.concat_partial or ri.concat_partial ~= true then
+		    --- We have to mark the final concat as deleted
+		    ngx.log(ngx.NOTICE, "Invalidating concat due to non-existent or invalid part")
+		    self.resource.info.invalid = true
 		    if not sb:update_info(resource, self.resource.info) then
 			ngx.log(ngx.ERR, "Error updating resource metadata: " .. resource)
 			return interr()
 		    end
+		    exit_status(ngx.HTTP_GONE)
+		    return true
 		end
-		ngx.header["Upload-Concat"] = conhdr
+		if first then
+		    first = false
+		else
+		    conhdr = conhdr .. " "
+		end
+		conhdr = conhdr .. self.config.resource_url_prefix .. "/" .. v
 	    end
+	    local infoupdate = false
+	    if size ~= false and size ~= self.resource.info.size then
+		self.resource.info.size = size
+		infoupdate = true
+	    end
+	    if size ~= false and size == complete then
+		self.resource.info.offset = size
+		infoupdate = true
+	    else
+		if not extensions.concatenation_unfinished then
+		    ngx.log(ngx.INFO, "Disclosing resource due to disabled concatenation-unfinished")
+		    exit_status(ngx.HTTP_FORBIDDEN)
+		    return true
+		end
+		self.resource.info.offset = nil
+	    end
+	    if infoupdate then
+		ngx.log(ngx.INFO, "Updating final Upload-Concat info: " .. resource)
+		if not sb:update_info(resource, self.resource.info) then
+		    ngx.log(ngx.ERR, "Error updating resource metadata: " .. resource)
+		    return interr()
+		end
+	    end
+	    ngx.header["Upload-Concat"] = conhdr
 	end
 	ngx.header["Cache-Control"] = "no_store"
 	local expires = self.resource.info.expires
@@ -516,8 +519,7 @@ function _M.process_request(self)
 
     if method == "PATCH" then
 	--- Patch against final Upload-Concat is not allowed
-	if self.resource.info.concat and
-	  type(self.resource.info.concat) == "table" then
+	if self.resource.info.concat_final then
 	    exit_status(ngx.HTTP_FORBIDDEN)
 	    return true
 	end
