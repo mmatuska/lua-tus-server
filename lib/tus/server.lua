@@ -352,8 +352,9 @@ function _M.process_request(self)
 	end
 	if concat_final then
 	    info.concat_final = concat_final
+        else
+	    info.offset = 0
 	end
-	info.offset = 0
 	if ulen ~= false then
 	    info.size = ulen
 	end
@@ -394,7 +395,9 @@ function _M.process_request(self)
 
     -- For all following requests the resource must exist
     self.resource.info = sb:get_info(resource)
-    if not self.resource.info or not self.resource.info.offset then
+    if not self.resource.info or 
+      (not self.resource.info.offset and
+      not self.resource.info.concat_final) then
        exit_status(ngx.HTTP_NOT_FOUND)
        return true
     end
