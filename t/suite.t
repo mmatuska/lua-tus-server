@@ -628,7 +628,7 @@ Location: /upload/[\da-f]+
 POST /upload/
 --- error_code: 201
 
-=== Block C23: POST with final Upload-Concat and non-existing resource
+=== Block C23: POST with final Upload-Concat and invalid resource
 --- log_level: info
 --- config
     location /upload/ {
@@ -646,9 +646,9 @@ Upload-Concat: final;12345678
 --- request
 POST /upload/
 --- error_code: 412
---- error_log: Upload-Concat with non-existing resource
+--- error_log: Upload-Concat with invalid resource
 
-=== Block C24: POST with final Upload-Concat and non-existing resource 2
+=== Block C24: POST with final Upload-Concat and non-existing resource
 --- log_level: info
 --- config
     location /upload/ {
