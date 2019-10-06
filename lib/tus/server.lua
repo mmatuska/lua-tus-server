@@ -395,7 +395,7 @@ function _M.process_request(self)
 
     -- For all following requests the resource must exist
     self.resource.info = sb:get_info(resource)
-    if not self.resource.info or 
+    if not self.resource.info or
       (not self.resource.info.offset and
       not self.resource.info.concat_final) then
        exit_status(ngx.HTTP_NOT_FOUND)
