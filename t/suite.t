@@ -7,6 +7,8 @@ run_tests();
 __DATA__
  
 === Block A1: OPTIONS
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -24,6 +26,8 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
 
 === Block A2: OPTIONS via X-Http-Method-Override
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -43,6 +47,8 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
 
 === Block A3: OPTIONS with creation extension disabled
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -61,6 +67,8 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
 
 === Block A4: OPTIONS with concatenation extension disabled
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -79,6 +87,8 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
 
 === Block A4: OPTIONS with checksum extension disabled
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -97,6 +107,8 @@ Tus-Extension: concatenation,concatenation-unfinished,creation,creation-defer-le
 --- error_code: 204
 
 === Block A5: OPTIONS with all extensions disabled
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -121,6 +133,8 @@ Tus-Version: 1.0.0
 --- error_code: 204
 
 === Block B1: Invalid method GET
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -133,6 +147,8 @@ GET /upload/
 --- error_code: 405
 
 === Block B2: Invalid method PUT
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -145,6 +161,8 @@ GET /upload/
 --- error_code: 405
 
 === Block C1: POST without Tus-Resumable
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -158,6 +176,8 @@ POST /upload/
 --- error_code: 412
 
 === Block C2: POST with invalid Tus-Resumable
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -173,6 +193,8 @@ Tus-Resumable: 0.9.9
 --- error_code: 412
 
 === Block C3: POST only with valid Tus-Resumable
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -189,6 +211,8 @@ POST /upload/
 
 === Block C4: POST with negative Upload-Length
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -206,6 +230,8 @@ Upload-Length: -1
 --- error_log: Received negative Upload-Length
 
 === Block C5: POST with zero Upload-Length
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -233,6 +259,8 @@ Location: /upload/[\da-f]+
 --- error_code: 201
 
 === Block C6: POST with positive Upload-Length
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -260,6 +288,8 @@ Location: /upload/[\da-f]+
 --- error_code: 201
 
 === Block C7: POST with creation disabled
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -280,6 +310,8 @@ POST /upload/
 
 === Block C8: POST with Upload-Length exceeding Tus-Max-Size
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -301,6 +333,8 @@ POST /upload/
 
 === Block C9: POST with positive Upload-Length and Upload-Defer-Length
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -322,6 +356,8 @@ POST /upload/
 
 === Block C10: POST with invalid Upload-Defer-Length
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -341,6 +377,8 @@ Upload-Defer-Length: abc
 --- error_log: Invalid Upload-Defer-Length
 
 === Block C11: POST with valid Upload-Defer-Length
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -368,6 +406,8 @@ Location: /upload/[\da-f]+
 --- error_code: 201
 
 === Block C12: POST with Upload-Defer-Length and creation-defer-length disabled
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -388,6 +428,8 @@ POST /upload/
 --- error_code: 400
 
 === Block C13: POST returning Upload-Expires
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -418,6 +460,8 @@ Location: /upload/[\da-f]+
 
 === Block C14: POST with invalid Upload-Metadata 1
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -439,6 +483,8 @@ POST /upload/
 
 === Block C15: POST with invalid Upload-Metadata 2
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -460,6 +506,8 @@ Upload-Metadata: testkey dGVzdHZhbA== aa
 
 === Block C16: POST with invalid Upload-Metadata 3
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -481,6 +529,8 @@ POST /upload/
 
 === Block C17: POST with invalid Upload-Metadata 4
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -501,6 +551,8 @@ Upload-Metadata: testkey dGVzdHZhbA==,testkey2 testval*
 --- error_log: Invalid Upload-Metadata
 
 === Block C18: POST with valid Upload-Metadata
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -530,6 +582,8 @@ POST /upload/
 
 === Block C19: POST with invalid Upload-Concat
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -551,6 +605,8 @@ POST /upload/
 
 === Block C20: POST with valid partial Upload-Concat and disabled extension
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -572,6 +628,8 @@ POST /upload/
 --- error_log: Received Upload-Concat with disabled extension
 
 === Block C21: POST with valid partial Upload-Concat
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -600,6 +658,8 @@ POST /upload/
 --- error_code: 201
 
 === Block C22: POST with valid partial Upload-Concat and Upload-Defer-Length
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -630,6 +690,8 @@ POST /upload/
 
 === Block C23: POST with final Upload-Concat and invalid resource
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -650,6 +712,8 @@ POST /upload/
 
 === Block C24: POST with final Upload-Concat and non-existing resource
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -671,6 +735,8 @@ POST /upload/
 
 === Block C25: POST with final Upload-Concat and non-partial resource
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -691,6 +757,8 @@ POST /upload/
 
 === Block C26: POST with final Upload-Concat and a non-partial resource 2
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -710,6 +778,8 @@ POST /upload/
 --- error_log: Upload-Concat with non-partial resource
 
 === Block C27: POST with valid final Upload-Concat without concatenation-unfinished
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -729,6 +799,8 @@ POST /upload/
 --- error_code: 412
 
 === Block C28: POST with valid final Upload-Concat and one resource
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -756,6 +828,8 @@ POST /upload/
 --- error_code: 201
 
 === Block C29: POST with valid final Upload-Concat and two resources
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -783,6 +857,8 @@ POST /upload/
 --- error_code: 201
 
 === Block C30: POST with valid final Upload-Concat and a deferred resource
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -810,6 +886,8 @@ POST /upload/
 --- error_code: 201
 
 === Block C31: POST with valid final Upload-Concat and absolute paths
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -838,6 +916,8 @@ POST /upload/
 --- error_log_file: "../c31.error.log"
 
 === Block D1: HEAD on non-existing resource
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -855,6 +935,8 @@ HEAD /upload/1234567890
 --- error_code: 404
 
 === Block D2: HEAD on existing resource
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -879,6 +961,8 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 --- error_code: 204
 
 === Block D3: HEAD on resource with Upload-Defer-Length
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -903,6 +987,8 @@ Upload-Defer-Length: 1
 
 === Block D4: HEAD on resource with Upload-Defer-Length with ext disabled
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -923,6 +1009,8 @@ Tus-Resumable: 1.0.0
 
 === Block D5: HEAD on unfinished Upload-Concat without concatenation-unfinished
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -943,6 +1031,8 @@ Tus-Resumable: 1.0.0
 
 === Block D6: HEAD on unfinished Upload-Concat with concatenation-unfinished
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -963,6 +1053,8 @@ Upload-Concat: final;/upload/7a845f10fd7696b9df8b13c328c34c52 /upload/03720362b6
 --- error_code: 204
 
 === Block E1: PATCH without Content-Type
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -982,6 +1074,8 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- error_code: 415
 
 === Block E2: PATCH with invalid Content-Type
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1002,6 +1096,8 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- error_code: 415
 
 === Block E3: PATCH without Upload-Offset
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1022,6 +1118,8 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- error_code: 409
 
 === Block E4: PATCH first chunk
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1047,6 +1145,8 @@ Upload-Offset: 6
 
 === Block E5: PATCH chunk exceeding Upload-Length
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1069,6 +1169,8 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- error_log: Upload-Offset + Content-Length exceeds Upload-Length
 
 === Block E6: PATCH last chunk
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1093,6 +1195,8 @@ Upload-Offset: 10
 --- error_code: 204
 
 === Block E7: HEAD on completed upload
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1118,6 +1222,8 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 
 === Block E8: PATCH on Upload-Defer-Length without Upload-Length
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1141,6 +1247,8 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 
 === Block E9: PATCH on Upload-Defer-Length with Upload-Length > Tus_Max_Size
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1166,6 +1274,8 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 
 === Block E10: PATCH on Upload-Defer-Length with ext disabled
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1190,6 +1300,8 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_log: Ignoring resource due to disabled creation-defer-length
 
 === Block E11: PATCH on Upload-Defer-Length with valid Upload-Length
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1215,6 +1327,8 @@ Upload-Offset: 8
 --- error_code: 204
 
 === Block E12: HEAD on partial upload
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1238,6 +1352,8 @@ Upload-Length: 20
 --- error_code: 204
 
 === Block E13: HEAD on expired upload
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1255,6 +1371,8 @@ HEAD /upload/c29e4d9b20fb6495843de87b2f508826
 --- error_code: 410
 
 === Block E14: HEAD on expired upload without expiration extension
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1279,6 +1397,8 @@ Upload-Offset: 0
 --- error_code: 204
 
 === Block F1: DELETE on existing resource without termination extension
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1297,6 +1417,8 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 405
 
 === Block F2: DELETE on existing resource
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1314,6 +1436,8 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 204
 
 === Block F3: DELETE on already deleted resource
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1331,6 +1455,8 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 410
 
 === Block F4: DELETE on non-existing resource
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1348,6 +1474,8 @@ DELETE /upload/12345678
 --- error_code: 404
 
 === Block F5: DELETE on existing resource with hard_delete 
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1366,6 +1494,8 @@ DELETE /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- error_code: 204
 
 === Block F6: DELETE on resource already hard deleted
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1384,6 +1514,8 @@ DELETE /upload/a25a7129d4e15fdce548ef0aad7a05b7
 
 === Block G1: PATCH with badly encoded checksum
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1408,6 +1540,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 
 === Block G2: PATCH with unsupported checksum algorithm
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1432,6 +1566,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 
 === Block G3: PATCH with invalid MD5 checksum
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1456,6 +1592,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 
 === Block G4: PATCH with valid MD5 checksum without checksum extension
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1480,6 +1618,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- error_log: Upload-Checksum without checksum extension
 
 === Block G5: PATCH with valid MD5 checksum
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1506,6 +1646,8 @@ Upload-Offset: 25
 
 === Block G6: PATCH with invalid SHA1 checksum
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1529,6 +1671,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- error_log: Checksum mismatch
 
 === Block G7: PATCH with valid SHA1 checksum
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1555,6 +1699,8 @@ Upload-Offset: 25
 
 === Block G8: PATCH with invalid SHA256 checksum
 --- log_level: info
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1578,6 +1724,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- error_log: Checksum mismatch
 
 === Block G9: PATCH with valid SHA256 checksum
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1603,6 +1751,8 @@ Upload-Offset: 25
 --- error_code: 204
 
 === Block G10: PATCH with SHA256 sum and internal multi-chunk
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1638,6 +1788,8 @@ Upload-Offset: 500
 --- error_code: 204
 
 === Block H1: PATCH against final Upload-Concat
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1659,6 +1811,8 @@ PATCH /upload/12ca7f9a120c9919f8882096f9bd2bc4
 --- error_code: 403
 
 === Block H2: PATCH against partial Upload-Concat
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1686,6 +1840,8 @@ Upload-Offset: 200
 --- error_code: 204
 
 === Block H3: PATCH against deferred partial Upload-Concat
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -1713,6 +1869,8 @@ Upload-Offset: 150
 --- error_code: 204
 
 === Block H4: POST with valid final Upload-Concat without concatenation-unfinished 2
+--- http_config
+	lua_shared_dict tuslock 10m;
 --- config
     location /upload/ {
 	content_by_lua_block {
