@@ -2,14 +2,14 @@
 --
 -- Copyright (C) by Martin Matuska (mmatuska)
 
-local string = require "string"
 local rstring = require "resty.string"
 local random = require "resty.random"
 local tus_version = "1.0.0"
 
 local _M = {}
 _M.config = {
-  resource_url_prefix="",
+  server_url=ngx.var.scheme .. "://" .. ngx.var.host,
+  upload_url="",
   max_size=0,
   chunk_size=65536,
   socket_timeout=30000,
@@ -125,6 +125,27 @@ end
 local function exit_status(status)
    ngx.status = status
    ngx.header["Content-Length"] = 0
+end
+
+local function resource_to_url(self, resource)
+    return self.config.upload_url  .. "/" .. resource
+end
+
+local function url_to_resource(self, url)
+    local upload_url = self.config.upload_url
+    if url:sub(1,upload_url:len() + 1) == upload_url .. "/" then
+	return url:sub(upload_url:len() + 2)
+    end
+    local full_url
+    if upload_url:sub(1,1) == "/" then
+	full_url = self.config.server_url .. upload_url
+    else
+	full_url = self.config.server_url .. "/" .. upload_url
+    end
+    if url:sub(1,full_url:len() + 1) == full_url .. "/" then
+	return url:sub(full_url:len() + 2)
+    end
+    return nil
 end
 
 local function check_concat_final(self, concat_final)
@@ -269,12 +290,13 @@ function _M.process_request(self)
 		    if cr then
 			concat_final = {}
 			for _, url in pairs(cr) do
-			    if url:sub(1, self.config.resource_url_prefix:len() + 1) ~= (self.config.resource_url_prefix .. "/") then
+			    local cres = url_to_resource(self, url)
+			    if not cres then
 				ngx.log(ngx.INFO, "Upload-Concat with invalid resource")
 				exit_status(412)
 				return true
 			    else
-				table.insert(concat_final, url:sub(self.config.resource_url_prefix:len() + 2))
+				table.insert(concat_final, cres)
 			    end
 		        end
 			local cinfo = check_concat_final(self, concat_final)
@@ -370,7 +392,7 @@ function _M.process_request(self)
 	    ngx.log(ngx.ERR, "Unable to create resource: " .. newresource)
 	    return interr()
 	else
-	    ngx.header["Location"] = self.config.resource_url_prefix .. "/" .. newresource
+	    ngx.header["Location"] = resource_to_url(self, newresource)
 	    if extensions.expiration and info.expires then
 		ngx.header["Upload-Expires"] = ngx.http_time(info.expires)
 	    end
@@ -385,7 +407,10 @@ function _M.process_request(self)
     end
 
     -- At the moment we support only hex resources
-    local resource = string.match(ngx.var.uri,"^.*/([0-9a-f]+)$")
+    local resource = url_to_resource(self, ngx.var.uri)
+    if resource then
+	resource = resource:match("^([0-9a-f]+)$")
+    end
     if not resource then
 	ngx.log(ngx.INFO, "Invalid resource endpoint")
 	exit_status(ngx.HTTP_NOT_FOUND)
@@ -452,7 +477,7 @@ function _M.process_request(self)
 		else
 		    conhdr = conhdr .. " "
 		end
-		conhdr = conhdr .. self.config.resource_url_prefix .. "/" .. v
+		conhdr = conhdr .. resource_to_url(self, v)
 	    end
 	    if cinfo.size then
 		self.resource.info.size = cinfo.size
