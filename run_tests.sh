@@ -28,5 +28,4 @@ echo '{"offset":0,"concat_final":["7a845f10fd7696b9df8b13c328c34c52","03720362b6
 touch $DIR/12ca7f9a120c9919f8882096f9bd2bc4
 
 # Run tests
-env TEST_NGINX_BINARY=/usr/local/openresty/bin/openresty perl t/suite.t
-env TEST_NGINX_BINARY=/usr/local/openresty/bin/openresty perl t/verify.t
+env TEST_NGINX_BINARY=/usr/local/openresty/bin/openresty prove -v
