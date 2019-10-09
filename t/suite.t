@@ -913,7 +913,6 @@ Location: /upload/[\da-f]+
 --- request
 POST /upload/
 --- error_code: 201
---- error_log_file: "../c31.error.log"
 
 === Block D1: HEAD on non-existing resource
 --- http_config
