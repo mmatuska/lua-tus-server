@@ -1,5 +1,8 @@
 #!/bin/sh
+TEST_NGINX_BINARY=${TEST_NGINX_BINARY:-/usr/local/openresty/bin/openresty}
+TEST_NGINX_INIT_BY_LUA="package.path = '$PWD/lib/?.lua;' .. (package.path or '')"
 DIR=./t/tus_temp
+
 set -e
 mkdir -p $DIR
 
@@ -28,4 +31,4 @@ echo '{"offset":0,"concat_final":["7a845f10fd7696b9df8b13c328c34c52","03720362b6
 touch $DIR/12ca7f9a120c9919f8882096f9bd2bc4
 
 # Run tests
-env TEST_NGINX_BINARY=/usr/local/openresty/bin/openresty prove -v
+env TEST_NGINX_BINARY="${TEST_NGINX_BINARY}" TEST_NGINX_INIT_BY_LUA="${TEST_NGINX_INIT_BY_LUA}" prove -v
