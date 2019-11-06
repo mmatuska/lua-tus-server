@@ -199,11 +199,6 @@ function _M.process_request(self)
 	ngx.log(ngx.NOTICE, "Auto-disabling concatenation-unfinished extension")
 	extensions.concatenation_unfinished = false
     end
-    -- Autodisable creation-defer-length if creation is disabled
-    if not extensions.creation then
-	ngx.log(ngx.NOTICE, "Auto-disabling creation-defer-length extension")
-	extensions.creation_defer_length = false
-    end
 
     -- Read storage backend
     local sb = require(self.config.storage_backend)
@@ -453,7 +448,7 @@ function _M.process_request(self)
 	    exit_status(ngx.HTTP_FORBIDDEN)
 	    return true
 	end
-	-- If creation-defer-length is disabled we don't reportsuch resources
+	-- If creation-defer-length is disabled we don't report such resources
 	if not extensions.creation_defer_length and
 	  self.resource.info.defer then
 	    ngx.log(ngx.INFO, "Disclosing resource due to disabled creation-defer-length")

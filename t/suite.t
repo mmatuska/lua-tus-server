@@ -62,7 +62,7 @@ OPTIONS /upload/
 --- response_headers
 Tus-Resumable: 1.0.0
 Tus-Version: 1.0.0
-Tus-Extension: checksum,concatenation,concatenation-unfinished,expiration,termination
+Tus-Extension: checksum,concatenation,concatenation-unfinished,creation-defer-length,expiration,termination
 Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
 
