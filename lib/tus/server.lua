@@ -131,7 +131,6 @@ local function exit_status(status)
    ngx.header["Content-Length"] = 0
 end
 
-
 local function check_concat_final(self, concat_final)
     local ret = {}
     local size = 0
@@ -180,6 +179,11 @@ local function randstring(len, charset)
         res = res .. charset:sub(r,r)
     end
     return res
+end
+
+-- Report tus version
+function _M.tus_version()
+    return tus_version
 end
 
 -- Create URL from resource name
