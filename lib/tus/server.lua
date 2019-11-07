@@ -224,18 +224,22 @@ function _M.resource_info(self,name)
 end
 
 -- Create new resource
-function _M.create_resource(self,name,i)
+function _M.create_resource(self,i)
     if not self.sb or (i and type(i) ~= "table") then
 	return false
     end
 
-    if self.name then
-	if type(name) ~= "string" or not name:match("^([%a%d]+)$") then
+    local name
+
+    if i.name then
+	if type(i.name) ~= "string" or not i.name:match("^([%a%d]+)$") then
 	    return false
 	end
-	if self:resource_info(name) ~= nil then
-	    return nil
+	name = i.name
+	if self:resource_info(i.name) ~= nil then
+	    return nil, name
 	end
+
     else
 	while true do
 	    name = randstring(self.config.resource_name_length)
@@ -245,23 +249,33 @@ function _M.create_resource(self,name,i)
 	end
     end
     local info = {}
-    if not i then
-	info.offset = 0
-    else
+    info.offset = 0
+    if i ~= nil then
+	if (i.defer ~= nil and type(i.defer) ~= "boolean")
+	  or (i.concat_partial ~= nil and type(i.concat_partial) ~= "boolean")
+	  or (i.concat_final ~= nil and type(i.concat_final) ~= "table")
+	  or (i.expires ~= nil and (type(i.expires) ~= "number" or i.expires < 0))
+	  or (i.metadata ~= nil and type(i.metadata) ~= "table") then
+	    return false, name
+	end
+	if (i.defer == true or i.concat_final ~= nil) then
+	    if i.size ~= nil then return false,name end
+	else
+	    if i.size == nil or type(i.size) ~= "number" or i.size < 0 then
+	        return false,name
+	    end
+	end
+	if (i.concat_final ~= nil) then
+	    info.offset = nil
+	end
 	info.concat_partial = i.concat_partial
 	info.concat_final = i.concat_final
-	info.offset = i.offset or 0
-	info.size = i.size
 	info.defer = i.defer
+	info.size = i.size
 	info.metadata = i.metadata
 	info.expires = i.expires
     end
-    local r = self.sb:create(name,info)
-    if r then
-	return name
-    else
-	return r
-    end
+    return self.sb:create(name,info),name
 end
 
 -- Process web request
@@ -447,15 +461,15 @@ function _M.process_request(self)
 	    info.size = ulen
 	end
 	if udefer ~= false then
-	    info.defer = udefer
+	    info.defer = true
 	end
 	info.metadata = metadata
 	if extensions.expiration and self.config.expire_timeout > 0 then
 	    info.expires = ngx.time() + self.config.expire_timeout
 	end
-	local newresource = self:create_resource(nil,info)
-	if not newresource then
-	    ngx.log(ngx.ERR, "Unable to create resource: " .. newresource)
+	local err, newresource = self:create_resource(info)
+	if not err then
+	    ngx.log(ngx.ERR, "Unable to create resource: " .. tostring(newresource))
 	    return interr()
 	else
 	    ngx.header["Location"] = resource_to_url(self, newresource)
@@ -463,7 +477,7 @@ function _M.process_request(self)
 		ngx.header["Upload-Expires"] = ngx.http_time(info.expires)
 	    end
 	    if info.defer then
-		ngx.header["Upload-Defer-Length"] = info.defer
+		ngx.header["Upload-Defer-Length"] = 1
 	    end
 	    self.resource.name = newresource
 	    self.resource.state = "created"

@@ -36,7 +36,6 @@ Tus-Version: 1.0.0
 Tus-Extension: checksum,concatenation,concatenation-unfinished,creation,creation-defer-length,expiration,termination
 Tus-Checksum-Algorithm: md5,sha1,sha256
 --- error_code: 204
---- error_log_file: "/tmp/e.log"
 
 === Block A2: OPTIONS via X-Http-Method-Override
 --- http_config eval
