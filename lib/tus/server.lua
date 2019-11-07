@@ -16,7 +16,7 @@ _M.config = {
   storage_backend="tus.storage_file",
   storage_backend_config={},
   hard_delete=false,
-  resource_length=10,
+  resource_name_length=10,
   extension = {
     checksum=true,
     concatenation=true,
@@ -79,15 +79,19 @@ local function decode_metadata(metadata)
 end
 
 local function encode_metadata(mtable)
+    -- Sort table first
+    local s = {}
+    for n in pairs(mtable) do table.insert(s, n) end
+    table.sort(s)
     local first = true
     local ret = ""
-    for key, val in pairs(mtable) do
+    for _, key in ipairs(s) do
 	if not first then
 	     ret = ret .. ","
 	else
 	     first = false
 	end
-	ret = ret .. key .. " " .. ngx.encode_base64(val)
+	ret = ret .. key .. " " .. ngx.encode_base64(mtable[key])
     end
     return ret
 end
@@ -337,7 +341,6 @@ function _M.process_request(self)
 	local umeta = headers["upload-metadata"]
 	local metadata = nil
 	local newresource
-	local rnd
 	local bad_request = false
 	if not concat_final then
 	    if udefer ~= false and udefer ~= 1 then
@@ -374,7 +377,7 @@ function _M.process_request(self)
 	    end
 	end
 	while true do
-	    newresource = randstring(self.config.resource_length)
+	    newresource = randstring(self.config.resource_name_length)
 	    if not sb:get_info(newresource) then break end
 	end
 	local info = {}

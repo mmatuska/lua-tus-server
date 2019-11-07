@@ -2,13 +2,25 @@ use Test::Nginx::Socket::Lua;
 
 plan tests => 64;
 no_shuffle();
+
+if (not defined $ENV{'HTTP_CONFIG'}) {
+    $ENV{'HTTP_CONFIG'} = '
+    client_body_temp_path logs;
+    proxy_temp_path logs;
+    fastcgi_temp_path logs;
+    uwsgi_temp_path logs;
+    scgi_temp_path logs;
+    lua_shared_dict tuslock 10m;
+';
+}
+env_to_nginx("HTTP_CONFIG");
 run_tests();
 
 __DATA__
  
 === Block C5A HEAD on resource created in C5
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -34,8 +46,8 @@ Upload-Length: 0
 --- error_code: 204
 
 === Block C6A HEAD on resource created in C6
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -61,8 +73,8 @@ Upload-Length: 10
 --- error_code: 204
 
 === Block C11A HEAD on resource created in C11
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -88,8 +100,8 @@ Upload-Defer-Length: 1
 --- error_code: 204
 
 === Block C13A HEAD on resource created in C13
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -115,8 +127,8 @@ Upload-Expires: (Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d\d (Jan|Feb|Mar|Apr|May|Jun|Jul
 --- error_code: 204
 
 === Block C18A HEAD on resource created in C18
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -143,8 +155,8 @@ Upload-Metadata: testkey dGVzdHZhbA==,testkey2 dGVzdHZhbDI=
 --- error_code: 204
 
 === Block C21A HEAD on resource created in C21
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -171,8 +183,8 @@ Upload-Concat: partial
 --- error_code: 204
 
 === Block C21B HEAD on resource created in C21 without concat
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -194,8 +206,8 @@ close $fh;
 --- error_code: 403
 
 === Block C22A HEAD on resource created in C22
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -222,8 +234,8 @@ Upload-Concat: partial
 --- error_code: 204
  
 === Block C28A HEAD on resource created in C28
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -249,8 +261,8 @@ Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f
 --- error_code: 204
 
 === Block C29A HEAD on resource created in C29
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -276,8 +288,8 @@ Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f /upload/7a845f10fd
 --- error_code: 204
 
 === Block C30A HEAD on resource created in C30
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -303,8 +315,8 @@ Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f /upload/03720362b6
 --- error_code: 204
 
 === Block H4A HEAD on resource created in H4 without concanetation-unfinished
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
@@ -331,8 +343,8 @@ Upload-Length: 350
 --- error_code: 204
 
 === Block H4B HEAD on resource created in H4 with concanetation-unfinished
---- http_config
-	lua_shared_dict tuslock 10m;
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
 --- config
     location /upload/ {
 	content_by_lua_block {
