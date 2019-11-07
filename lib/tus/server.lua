@@ -202,6 +202,17 @@ local function randstring(len, charset)
     return res
 end
 
+function _M.initsb(self)
+    -- Read storage backend
+    self.sb = require(self.config.storage_backend)
+    if not self.sb then
+        ngx.log(ngx.ERR, "could not load storage backend")
+	return false
+    end
+    self.sb.config=self.config.storage_backend_config
+    return true
+end
+
 -- Process web request
 function _M.process_request(self)
     -- All responses include the Tus-Resumable header
@@ -219,14 +230,11 @@ function _M.process_request(self)
 	extensions.concatenation_unfinished = false
     end
 
-    -- Read storage backend
-    local sb = require(self.config.storage_backend)
-    if not sb then
-       ngx.log(ngx.ERR, "could not load storage backend")
-       return interr()
+    -- Initialize storage backend if necessary
+    if not self.sb and not self:initsb() then
+	return interr()
     end
-    sb.config = self.config.storage_backend_config
-    self.sb = sb
+    local sb = self.sb
 
     local headers = ngx.req.get_headers()
     local method
