@@ -157,7 +157,7 @@ local function check_concat_final(self, concat_final)
     local size = 0
     local complete = 0
     for _, v in pairs(concat_final) do
-	local ri = self.sb:get_info(v)
+	local ri = self:resource_info(v)
 	if not ri then
 	    ret.err = "Upload-Concat with non-existing resource"
 	elseif ri.deleted then
@@ -202,8 +202,8 @@ local function randstring(len, charset)
     return res
 end
 
+-- Initialize storage backend
 function _M.initsb(self)
-    -- Read storage backend
     self.sb = require(self.config.storage_backend)
     if not self.sb then
         ngx.log(ngx.ERR, "could not load storage backend")
@@ -211,6 +211,57 @@ function _M.initsb(self)
     end
     self.sb.config=self.config.storage_backend_config
     return true
+end
+
+-- Get resource info
+function _M.resource_info(self,name)
+    if not self.sb or not name or type(name) ~= "string"
+      or not name:match("^([%a%d]+)$") then
+	return false
+    else
+	return self.sb:get_info(name)
+    end
+end
+
+-- Create new resource
+function _M.create_resource(self,name,i)
+    if not self.sb or (i and type(i) ~= "table") then
+	return false
+    end
+
+    if self.name then
+	if type(name) ~= "string" or not name:match("^([%a%d]+)$") then
+	    return false
+	end
+	if self:resource_info(name) ~= nil then
+	    return nil
+	end
+    else
+	while true do
+	    name = randstring(self.config.resource_name_length)
+	    local r = self:resource_info(name)
+	    if r == false then return false end
+	    if r == nil then break end
+	end
+    end
+    local info = {}
+    if not i then
+	info.offset = 0
+    else
+	info.concat_partial = i.concat_partial
+	info.concat_final = i.concat_final
+	info.offset = i.offset or 0
+	info.size = i.size
+	info.defer = i.defer
+	info.metadata = i.metadata
+	info.expires = i.expires
+    end
+    local r = self.sb:create(name,info)
+    if r then
+	return name
+    else
+	return r
+    end
 end
 
 -- Process web request
@@ -348,7 +399,6 @@ function _M.process_request(self)
 	end
 	local umeta = headers["upload-metadata"]
 	local metadata = nil
-	local newresource
 	local bad_request = false
 	if not concat_final then
 	    if udefer ~= false and udefer ~= 1 then
@@ -384,10 +434,6 @@ function _M.process_request(self)
 		return true
 	    end
 	end
-	while true do
-	    newresource = randstring(self.config.resource_name_length)
-	    if not sb:get_info(newresource) then break end
-	end
 	local info = {}
 	if concat_partial then
 	    info.concat_partial = concat_partial
@@ -407,8 +453,8 @@ function _M.process_request(self)
 	if extensions.expiration and self.config.expire_timeout > 0 then
 	    info.expires = ngx.time() + self.config.expire_timeout
 	end
-	local ret = sb:create(newresource, info)
-	if not ret then
+	local newresource = self:create_resource(nil,info)
+	if not newresource then
 	    ngx.log(ngx.ERR, "Unable to create resource: " .. newresource)
 	    return interr()
 	else
@@ -439,7 +485,7 @@ function _M.process_request(self)
     self.resource.name = resource
 
     -- For all following requests the resource must exist
-    self.resource.info = sb:get_info(resource)
+    self.resource.info = self:resource_info(resource)
     if not self.resource.info or
       (not self.resource.info.offset and
       not self.resource.info.concat_final) then

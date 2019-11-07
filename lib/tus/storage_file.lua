@@ -116,7 +116,7 @@ function _M.create(self, resource, data)
     local file
     file = io.open(self:get_path(resource), "w")
     if not file then
-        return false
+        return nil
     end
     file:close()
     local ret = self:update_info(resource, data)
