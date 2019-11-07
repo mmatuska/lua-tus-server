@@ -293,7 +293,7 @@ function _M.process_request(self)
     -- Store extension support
     local extensions = self.config.extension
     -- Autodisable concatenation-unfinished if concatenation is disabled
-    if not extensions.concatenation then
+    if not extensions.concatenation and extensions.concatenation_unfinished ~= false then
 	ngx.log(ngx.NOTICE, "Auto-disabling concatenation-unfinished extension")
 	extensions.concatenation_unfinished = false
     end
