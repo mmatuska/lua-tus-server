@@ -255,7 +255,7 @@ Upload-Length: 0
 POST /upload/
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- error_code: 201
 
 === Block C6: POST with positive Upload-Length
@@ -284,7 +284,7 @@ Upload-Length: 10
 POST /upload/
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- error_code: 201
 
 === Block C7: POST with creation disabled
@@ -402,7 +402,7 @@ Upload-Defer-Length: 1
 POST /upload/
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- error_code: 201
 
 === Block C12: POST with Upload-Defer-Length and creation-defer-length disabled
@@ -455,7 +455,7 @@ POST /upload/
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
 Upload-Expires: (Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d\d (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d\d\d\d \d\d:\d\d:\d\d GMT
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- error_code: 201
 
 === Block C14: POST with invalid Upload-Metadata 1
@@ -575,7 +575,7 @@ Upload-Length: 10
 Upload-Metadata: testkey dGVzdHZhbA==,testkey2 dGVzdHZhbDI=
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- request
 POST /upload/
 --- error_code: 201
@@ -652,7 +652,7 @@ Upload-Length: 10
 Upload-Concat: partial
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- request
 POST /upload/
 --- error_code: 201
@@ -683,7 +683,7 @@ Upload-Concat: partial
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
 Upload-Defer-Length: 1
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- request
 POST /upload/
 --- error_code: 201
@@ -822,7 +822,7 @@ Tus-Resumable: 1.0.0
 Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- request
 POST /upload/
 --- error_code: 201
@@ -851,7 +851,7 @@ Tus-Resumable: 1.0.0
 Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f /upload/7a845f10fd7696b9df8b13c328c34c52
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- request
 POST /upload/
 --- error_code: 201
@@ -880,7 +880,7 @@ Tus-Resumable: 1.0.0
 Upload-Concat: final;/upload/69ae186b699db22960f9d93b7068e67f /upload/03720362b6571cfffd17adfffb565375
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- request
 POST /upload/
 --- error_code: 201
@@ -909,7 +909,7 @@ Tus-Resumable: 1.0.0
 Upload-Concat: final;http://localhost/upload/69ae186b699db22960f9d93b7068e67f http://localhost/upload/7a845f10fd7696b9df8b13c328c34c52
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- request
 POST /upload/
 --- error_code: 201
@@ -1892,7 +1892,7 @@ Tus-Resumable: 1.0.0
 Upload-Concat: final;/upload/7a845f10fd7696b9df8b13c328c34c52 /upload/d4d0bf5e0c5fae7b1a900a972010cd58
 --- response_headers_like
 Tus-Resumable: 1\.0\.0
-Location: /upload/[\da-f]+
+Location: /upload/[\da-zA-Z]+
 --- request
 POST /upload/
 --- error_code: 201

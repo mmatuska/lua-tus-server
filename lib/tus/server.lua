@@ -3,7 +3,6 @@
 -- Copyright (C) by Martin Matuska (mmatuska)
 
 local rstring = require "resty.string"
-local random = require "resty.random"
 local tus_version = "1.0.0"
 
 local _M = {}
@@ -17,6 +16,7 @@ _M.config = {
   storage_backend="tus.storage_file",
   storage_backend_config={},
   hard_delete=false,
+  resource_length=10,
   extension = {
     checksum=true,
     concatenation=true,
@@ -181,6 +181,21 @@ local function check_concat_final(self, concat_final)
     end
     ret.size = size
     return ret
+end
+
+local function randstring(len, charset)
+    math.randomseed(ngx.time() + ngx.worker.pid())
+    local res = ""
+    local r
+    if charset == nil then
+        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    end
+    local cl = #charset
+    for _ = 1, len do
+        r = math.random(1,cl)
+        res = res .. charset:sub(r,r)
+    end
+    return res
 end
 
 -- Process web request
@@ -359,8 +374,7 @@ function _M.process_request(self)
 	    end
 	end
 	while true do
-	    rnd = random.bytes(16,true)
-	    newresource = rstring.to_hex(rnd)
+	    newresource = randstring(self.config.resource_length)
 	    if not sb:get_info(newresource) then break end
 	end
 	local info = {}
@@ -404,7 +418,7 @@ function _M.process_request(self)
     -- At the moment we support only hex resources
     local resource = url_to_resource(self, ngx.var.uri)
     if resource then
-	resource = resource:match("^([0-9a-f]+)$")
+	    resource = resource:match("^([%a%d]+)$")
     end
     if not resource then
 	ngx.log(ngx.INFO, "Invalid resource endpoint")
