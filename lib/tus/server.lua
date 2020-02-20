@@ -637,6 +637,11 @@ function _M.process_request(self)
 	    exit_status(415) -- Unsupported Media Type
 	    return true
 	end
+	if self.resource.info.defer and not extensions.creation_defer_length then
+	    ngx.log(ngx.INFO, "Ignoring resource due to disabled creation-defer-length")
+	    exit_status(ngx.HTTP_FORBIDDEN)
+	    return true
+	end
 	local upload_offset = tonumber(headers["upload-offset"])
 	if not upload_offset or upload_offset ~= self.resource.info.offset then
 	    ngx.log(ngx.INFO, "Upload-Offset mismatch: " .. resource)
@@ -645,28 +650,25 @@ function _M.process_request(self)
 	end
 	local upload_length
 	if self.resource.info.defer then
-	    if not extensions.creation_defer_length then
-		ngx.log(ngx.INFO, "Ignoring resource due to disabled creation-defer-length")
-		exit_status(ngx.HTTP_FORBIDDEN)
-		return true
-	    end
 	    upload_length = tonumber(headers["upload-length"])
-	    if not upload_length then
-		ngx.log(ngx.INFO, "Invalid header: Upload-Length")
-		exit_status(ngx.HTTP_CONFLICT)
-		return true
-	    end
-	    if self.config["max_size"] > 0 and
-	      upload_length > self.config["max_size"] then
-		ngx.log(ngx.INFO, "Upload-Length exceeds Tus-Max-Size")
-		exit_status(413) -- Request Entity Too Large
-		return true
-	    end
-	    self.resource.info.defer = nil
-	    self.resource.info.size = upload_length
-	    if not sb:update_info(resource, self.resource.info) then
-		ngx.log(ngx.ERR, "Error updating resource metadata: " .. resource)
-		return interr()
+	    if upload_length then
+		if upload_length < upload_offset then
+		   ngx.log(ngx.INFO, "Upload-Length is smaller then Upload-Offset")
+		   exit_status(ngx.HTTP_CONFLICT)
+		   return true
+		end
+		if self.config["max_size"] > 0 and
+		  upload_length > self.config["max_size"] then
+		    ngx.log(ngx.INFO, "Upload-Length exceeds Tus-Max-Size")
+		    exit_status(413) -- Request Entity Too Large
+		    return true
+	        end
+	        self.resource.info.defer = nil
+	        self.resource.info.size = upload_length
+	        if not sb:update_info(resource, self.resource.info) then
+		    ngx.log(ngx.ERR, "Error updating resource metadata: " .. resource)
+		    return interr()
+	        end
 	    end
 	else
 	    upload_length = self.resource.info.size
@@ -675,6 +677,16 @@ function _M.process_request(self)
 	if not content_length or content_length < 0 then
 	    ngx.log(ngx.INFO, "Invalid header: Content-Length")
 	    exit_status(ngx.HTTP_BAD_REQUEST)
+	    return true
+	end
+	if self.config["max_size"] > 0 and (upload_offset + content_length) > self.config["max_size"] then
+	    ngx.log(ngx.INFO, "Upload-Offset + Content-Length exceeds Tus-Max-Size")
+	    exit_status(413) -- Request Entity Too Large
+	    return true
+	end
+	if upload_length and (upload_offset + content_length) > upload_length then
+	    ngx.log(ngx.INFO, "Upload-Offset + Content-Length exceeds Upload-Length")
+	    exit_status(ngx.HTTP_CONFLICT)
 	    return true
 	end
 
@@ -711,11 +723,7 @@ function _M.process_request(self)
 	    hash_ctx = resty_hash:new()
 	end
 
-	if (upload_offset + content_length) > upload_length then
-	    ngx.log(ngx.INFO, "Upload-Offset + Content-Length exceeds Upload-Length")
-	    exit_status(ngx.HTTP_CONFLICT)
-	    return true
-	end
+
 	if self.resource.info.expires then
 	    local secs = self.resource.info.expires
 	    if secs and ngx.now() > secs then
