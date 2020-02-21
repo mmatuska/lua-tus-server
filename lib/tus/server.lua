@@ -540,13 +540,6 @@ function _M.process_request(self)
 	    exit_status(ngx.HTTP_FORBIDDEN)
 	    return true
 	end
-	-- If creation-defer-length is disabled we don't report such resources
-	if not extensions.creation_defer_length and
-	  self.resource.info.defer then
-	    ngx.log(ngx.INFO, "Disclosing resource due to disabled creation-defer-length")
-	    exit_status(ngx.HTTP_FORBIDDEN)
-	    return true
-	end
 	if self.resource.info.concat_partial and self.resource.info.concat_partial == true then
 	    ngx.header["Upload-Concat"] = "partial"
 	elseif self.resource.info.concat_final then
@@ -637,13 +630,8 @@ function _M.process_request(self)
 	    exit_status(415) -- Unsupported Media Type
 	    return true
 	end
-	if self.resource.info.defer and not extensions.creation_defer_length then
-	    ngx.log(ngx.INFO, "Ignoring resource due to disabled creation-defer-length")
-	    exit_status(ngx.HTTP_FORBIDDEN)
-	    return true
-	end
 	local upload_offset = tonumber(headers["upload-offset"])
-	if not upload_offset or upload_offset ~= self.resource.info.offset then
+	if upload_offset == nil or upload_offset ~= self.resource.info.offset then
 	    ngx.log(ngx.INFO, "Upload-Offset mismatch: " .. resource)
 	    exit_status(ngx.HTTP_CONFLICT)
 	    return true

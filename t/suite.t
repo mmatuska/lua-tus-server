@@ -1,6 +1,6 @@
 use Test::Nginx::Socket::Lua;
 
-plan tests => 207;
+plan tests => 216;
 no_shuffle();
 
 if (not defined $ENV{'HTTP_CONFIG'}) {
@@ -1015,8 +1015,13 @@ Upload-Defer-Length: 1
 Tus-Resumable: 1.0.0
 --- request
     HEAD /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
---- error_code: 403
---- error_log: Disclosing resource due to disabled creation-defer-length
+--- response_headers
+Tus-Resumable: 1.0.0
+Upload-Offset: 0
+Upload-Defer-Length: 1
+!Upload-Length
+!Upload-Concat
+--- error_code: 204
 
 === Block D5: HEAD on unfinished Upload-Concat without concatenation-unfinished
 --- log_level: info
@@ -1231,7 +1236,7 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 !Upload-Concat
 --- error_code: 204
 
-=== Block E9: PATCH on completed upload with zero Content-Length
+=== Block E8: PATCH on completed upload with zero Content-Length
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
 --- config
@@ -1259,7 +1264,7 @@ Upload-Offset: 10
 !Upload-Concat
 --- error_code: 204
 
-=== Block E10: PATCH on Upload-Defer-Length without Upload-Length
+=== Block E9: PATCH on Upload-Defer-Length without Upload-Length
 --- log_level: info
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
@@ -1281,9 +1286,13 @@ Upload-Offset: 0
 --- request
 PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 123456
+--- response_headers
+Tus-Resumable: 1.0.0
+Upload-Offset: 6
+!Upload-Defer-Length
 --- error_code: 204
 
-=== Block E9: PATCH on Upload-Defer-Length with Upload_Length < Upload_Offset
+=== Block E10: PATCH on Upload-Defer-Length with Upload_Length < Upload_Offset
 --- log_level: info
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
@@ -1379,15 +1388,16 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
     }
 --- more_headers
 Tus-Resumable: 1.0.0
-Content-Length: 8
+Content-Length: 0
 Content-Type: application/offset+octet-stream
-Upload-Offset: 0
-Upload-Length: 20
+Upload-Offset: 6
 --- request
 PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
-12345678
---- error_code: 403
---- error_log: Ignoring resource due to disabled creation-defer-length
+--- response_headers
+Tus-Resumable: 1.0.0
+Upload-Offset: 6
+!Upload-Defer-Length
+--- error_code: 204
 
 === Block E14: HEAD on partial upload with Upload-Defer-Length
 --- http_config eval
