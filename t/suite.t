@@ -1,6 +1,6 @@
 use Test::Nginx::Socket::Lua;
 
-plan tests => 198;
+plan tests => 207;
 no_shuffle();
 
 if (not defined $ENV{'HTTP_CONFIG'}) {
@@ -1231,7 +1231,35 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 !Upload-Concat
 --- error_code: 204
 
-=== Block E8: PATCH on Upload-Defer-Length without Upload-Length
+=== Block E9: PATCH on completed upload with zero Content-Length
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.upload_url = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Upload-Offset: 10
+Content-Type: application/offset+octet-stream
+Content-Length: 0
+--- request
+PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
+--- response_headers
+Tus-Resumable: 1.0.0
+Upload-Offset: 10
+!Upload-Length
+!Upload-Defer-Length
+!Upload-Concat
+--- error_code: 204
+
+=== Block E10: PATCH on Upload-Defer-Length without Upload-Length
 --- log_level: info
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
@@ -1281,7 +1309,7 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 409
 --- error_log: Upload-Length is smaller then Upload-Offset
 
-=== Block E10: PATCH on Upload-Defer-Length with Upload-Length > Tus_Max_Size
+=== Block E11: PATCH on Upload-Defer-Length with Upload-Length > Tus_Max_Size
 --- log_level: info
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
@@ -1308,7 +1336,7 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 413
 --- error_log: Upload-Length exceeds Tus-Max-Size
 
-=== Block E11: PATCH on Upload-Defer-Length with Content-Length + Upload-Offset > Tus-Max-Size
+=== Block E12: PATCH on Upload-Defer-Length with Content-Length + Upload-Offset > Tus-Max-Size
 --- log_level: info
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
@@ -1334,7 +1362,7 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 413
 --- error_log: Upload-Offset + Content-Length exceeds Tus-Max-Size
 
-=== Block E12: PATCH on Upload-Defer-Length with ext disabled
+=== Block E13: PATCH on Upload-Defer-Length with ext disabled
 --- log_level: info
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
@@ -1361,7 +1389,7 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- error_code: 403
 --- error_log: Ignoring resource due to disabled creation-defer-length
 
-=== Block E13: HEAD on partial upload with Upload-Defer-Length
+=== Block E14: HEAD on partial upload with Upload-Defer-Length
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
 --- config
@@ -1386,7 +1414,7 @@ Upload-Defer-Length: 1
 !Upload-Concat
 --- error_code: 204
 
-=== Block E14: PATCH on Upload-Defer-Length with valid Upload-Length
+=== Block E15: PATCH on Upload-Defer-Length with valid Upload-Length
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
 --- config
@@ -1413,7 +1441,7 @@ Tus-Resumable: 1.0.0
 Upload-Offset: 14
 --- error_code: 204
 
-=== Block E15: HEAD on partial upload
+=== Block E16: HEAD on partial upload
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
 --- config
@@ -1438,7 +1466,7 @@ Upload-Length: 20
 !Upload-Concat
 --- error_code: 204
 
-=== Block E16: HEAD on expired upload
+=== Block E17: HEAD on expired upload
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
 --- config
@@ -1457,7 +1485,7 @@ Tus-Resumable: 1.0.0
 HEAD /upload/c29e4d9b20fb6495843de87b2f508826
 --- error_code: 410
 
-=== Block E17: HEAD on expired upload without expiration extension
+=== Block E18: HEAD on expired upload without expiration extension
 --- http_config eval
     $ENV{'HTTP_CONFIG'}
 --- config
@@ -1481,6 +1509,32 @@ Upload-Length: 10
 Upload-Offset: 0
 !Upload-Defer-Length
 !Upload-Concat
+--- error_code: 204
+
+=== Block E19: PATCH on Upload-Defer-Length with Upload-Length and zero Content-Length 
+--- http_config eval
+    $ENV{'HTTP_CONFIG'}
+--- config
+    location /upload/ {
+	content_by_lua_block {
+	    local tus = require "tus.server"
+	    tus.config.upload_url = "/upload"
+	    tus.config.storage_backend = "tus.storage_file"
+	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
+	    tus:process_request()
+	}
+    }
+--- more_headers
+Tus-Resumable: 1.0.0
+Content-Length: 0
+Content-Type: application/offset+octet-stream
+Upload-Offset: 40
+Upload-Length: 40
+--- request
+PATCH /upload/8f68ee9f0afa3eebc466d2e6bdfe3708
+--- response_headers
+Tus-Resumable: 1.0.0
+Upload-Offset: 40
 --- error_code: 204
 
 === Block F1: DELETE on existing resource without termination extension

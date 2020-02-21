@@ -733,6 +733,7 @@ function _M.process_request(self)
 	    end
 	end
 	if content_length == 0 then
+	    ngx.header["Upload-Offset"] = upload_offset
 	    exit_status(ngx.HTTP_NO_CONTENT)
 	    return true
 	end
