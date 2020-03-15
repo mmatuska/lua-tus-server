@@ -33,7 +33,8 @@ Server-side implementation of the [tus](https://tus.io/) protocol in Lua.
     server {
         location /upload/ {
             content_by_lua_block {
-                local tus = require "tus.server"
+                local tus_server = require "tus.server"
+                local tus = tus_server:new()
                 tus.config.storage_backend = "tus.storage_file"
                 tus.config.storage_backend_config.storage_path = "/tmp"
                 tus.config.storage_backend_config.lock_zone = ngx.shared.tuslock

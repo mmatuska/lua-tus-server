@@ -6,11 +6,11 @@ local cjson = require "cjson"
 local os = require "os"
 
 local _M = {}
-_M.config = {
+local mt = { __index = _M }
+local config = {
   storage_path="/tmp",
   lock_zone=ngx.shared.tuslock
 }
-_M.file = nil
 
 -- Check if a file is readable
 local function file_exists(path)
@@ -143,6 +143,10 @@ function _M.delete(self, resource)
         return false
     end
     return true
+end
+
+function _M.new(_)
+    return setmetatable({config = config}, mt)
 end
 
 return _M

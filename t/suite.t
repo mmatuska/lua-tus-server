@@ -24,7 +24,8 @@ __DATA__
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus:process_request()
 	}
     }
@@ -43,7 +44,8 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus:process_request()
 	}
     }
@@ -64,7 +66,8 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.extension.creation = false
 	    tus:process_request()
 	}
@@ -84,7 +87,8 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.extension.concatenation = false
 	    tus:process_request()
 	}
@@ -104,7 +108,8 @@ Tus-Checksum-Algorithm: md5,sha1,sha256
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.extension.checksum = false
 	    tus:process_request()
 	}
@@ -124,7 +129,8 @@ Tus-Extension: concatenation,concatenation-unfinished,creation,creation-defer-le
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.extension.checksum = false
 	    tus.config.extension.concatenation = false
 	    tus.config.extension.concatenation_unfinished = false
@@ -150,7 +156,8 @@ Tus-Version: 1.0.0
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus:process_request()
 	}
     }
@@ -164,7 +171,8 @@ GET /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus:process_request()
 	}
     }
@@ -178,7 +186,8 @@ GET /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus:process_request()
 	}
@@ -193,7 +202,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus:process_request()
 	}
@@ -210,7 +220,8 @@ Tus-Resumable: 0.9.9
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus:process_request()
 	}
@@ -228,7 +239,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus:process_request()
 	}
@@ -247,7 +259,8 @@ Upload-Length: -1
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -276,7 +289,8 @@ Location: /upload/[\da-zA-Z]+
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -305,7 +319,8 @@ Location: /upload/[\da-zA-Z]+
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -327,7 +342,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -350,7 +366,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -373,7 +390,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -394,7 +412,8 @@ Upload-Defer-Length: abc
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -423,7 +442,8 @@ Location: /upload/[\da-zA-Z]+
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -445,7 +465,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -477,7 +498,8 @@ Location: /upload/[\da-zA-Z]+
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -500,7 +522,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -523,7 +546,8 @@ Upload-Metadata: testkey dGVzdHZhbA== aa
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -546,7 +570,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -568,7 +593,8 @@ Upload-Metadata: testkey dGVzdHZhbA==,testkey2 testval*
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -599,7 +625,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -622,7 +649,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -645,7 +673,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -675,7 +704,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -707,7 +737,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -729,7 +760,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -752,7 +784,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -774,7 +807,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -795,7 +829,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -816,7 +851,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -845,7 +881,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -874,14 +911,15 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
 	    tus:process_request()
 
 	    if ngx.resp.get_headers()["Location"] then
-	        local file = io.open("./t/tus_temp/c30.location","w")
+		local file = io.open("./t/tus_temp/c30.location","w")
 		file:write(ngx.resp.get_headers()["Location"])
 		file:close()
 	    end
@@ -903,7 +941,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -932,7 +971,8 @@ POST /upload/
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -951,7 +991,8 @@ HEAD /upload/1234567890
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -977,7 +1018,8 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1003,7 +1045,8 @@ Upload-Defer-Length: 1
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1030,7 +1073,8 @@ Upload-Defer-Length: 1
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1052,7 +1096,8 @@ Tus-Resumable: 1.0.0
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1074,7 +1119,8 @@ Upload-Concat: final;/upload/7a845f10fd7696b9df8b13c328c34c52 /upload/03720362b6
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1095,7 +1141,8 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1117,7 +1164,8 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1139,7 +1187,8 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1166,7 +1215,8 @@ Upload-Offset: 6
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1190,7 +1240,8 @@ PATCH /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1216,7 +1267,8 @@ Upload-Offset: 10
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1242,7 +1294,8 @@ Upload-Metadata: mimetype dGV4dC9wbGFpbg==,name dGVzdC50eHQ=
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1271,7 +1324,8 @@ Upload-Offset: 10
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1299,7 +1353,8 @@ Upload-Offset: 6
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1325,7 +1380,8 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1352,7 +1408,8 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1378,7 +1435,8 @@ PATCH /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1405,7 +1463,8 @@ Upload-Offset: 6
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1430,7 +1489,8 @@ Upload-Defer-Length: 1
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1457,7 +1517,8 @@ Upload-Offset: 14
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1482,7 +1543,8 @@ Upload-Length: 20
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1501,7 +1563,8 @@ HEAD /upload/c29e4d9b20fb6495843de87b2f508826
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1527,7 +1590,8 @@ Upload-Offset: 0
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1553,7 +1617,8 @@ Upload-Offset: 40
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1573,7 +1638,8 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1592,7 +1658,8 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1611,7 +1678,8 @@ DELETE /upload/a786460cd69b3ff98c7ad5ad7ec95dc3
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1630,7 +1698,8 @@ DELETE /upload/12345678
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1650,7 +1719,8 @@ DELETE /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1670,7 +1740,8 @@ DELETE /upload/a25a7129d4e15fdce548ef0aad7a05b7
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1696,7 +1767,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1722,7 +1794,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1748,7 +1821,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1774,7 +1848,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1802,7 +1877,8 @@ Upload-Offset: 25
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1827,7 +1903,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1855,7 +1932,8 @@ Upload-Offset: 25
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1880,7 +1958,8 @@ PATCH /upload/b0aeb37004e0480f15c60f650ee92e02
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1907,7 +1986,8 @@ Upload-Offset: 25
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.chunk_size = 100
 	    tus.config.storage_backend = "tus.storage_file"
@@ -1944,7 +2024,8 @@ Upload-Offset: 500
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1967,7 +2048,8 @@ PATCH /upload/12ca7f9a120c9919f8882096f9bd2bc4
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -1996,7 +2078,8 @@ Upload-Offset: 200
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"
@@ -2025,7 +2108,8 @@ Upload-Offset: 150
 --- config
     location /upload/ {
 	content_by_lua_block {
-	    local tus = require "tus.server"
+	    local tus_server = require "tus.server"
+	    local tus = tus_server:new()
 	    tus.config.upload_url = "/upload"
 	    tus.config.storage_backend = "tus.storage_file"
 	    tus.config.storage_backend_config.storage_path = "./t/tus_temp"

@@ -6,7 +6,8 @@ local rstring = require "resty.string"
 local tus_version = "1.0.0"
 
 local _M = {}
-_M.config = {
+local mt = { __index = _M }
+local config = {
   server_url=ngx.var.scheme .. "://" .. ngx.var.host,
   upload_url="",
   max_size=0,
@@ -27,12 +28,6 @@ _M.config = {
     termination=true
   }
 }
-_M.resource = {
-  name=nil,
-  info=nil,
-  state=nil
-}
-_M.sb = nil
 
 local function split(s, delimiter)
     local result = {};
@@ -211,11 +206,12 @@ end
 
 -- Initialize storage backend
 function _M.initsb(self)
-    self.sb = require(self.config.storage_backend)
-    if not self.sb then
+    local sb = require(self.config.storage_backend)
+    if not sb then
         ngx.log(ngx.ERR, "could not load storage backend")
         return false
     end
+    self.sb = sb:new()
     self.sb.config=self.config.storage_backend_config
     return true
 end
@@ -795,6 +791,10 @@ function _M.process_request(self)
         end
         return true
     end
+end
+
+function _M.new(_)
+    return setmetatable({config = config, resource = {}}, mt)
 end
 
 return _M
