@@ -729,6 +729,11 @@ function _M.process_request(self)
         local socket, err = ngx.req.socket()
         if not socket then
             ngx.log(ngx.ERR, "Socket error: "  .. err)
+            if err == "client aborted" then
+                -- 499 Client Closed Request
+                ngx.status = 499
+                return false
+            end
             return interr()
         end
         socket:settimeout(self.config.socket_timeout)
