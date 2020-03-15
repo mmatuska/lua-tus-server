@@ -735,7 +735,7 @@ function _M.process_request(self)
 
         local to_receive = content_length
         local cur_offset = upload_offset
-        local csize
+        local _, csize
         if not sb:open(resource, upload_offset) then
             ngx.log(ngx.ERR, "Error opening resource for writing: " .. resource)
             return interr()
@@ -756,9 +756,9 @@ function _M.process_request(self)
             if hash_ctx then
                 hash_ctx:update(chunk)
             end
-            if not sb:write(chunk) then
-                sb:close(resource)
-                ngx.log(ngx.ERR, "Error writing to resource: " .. resource)
+            _, e = sb:write(chunk)
+            if e then
+                ngx.log(ngx.ERR, "Error writing to resource " .. resource .. ": ", e)
                 return interr()
             end
             cur_offset = cur_offset + csize

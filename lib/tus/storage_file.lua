@@ -86,9 +86,13 @@ end
 function _M.write(self, chunk)
     if not self.file then
         return false
-    else
-        return self.file:write(chunk)
     end
+    self.file:write(chunk)
+    local _, err = self.file:seek("cur")
+    if err then
+        return false, err
+    end
+    return true
 end
 
 function _M.get_info(self, resource)
@@ -108,7 +112,11 @@ function _M.update_info(self, resource, data)
       return false
     end
     file:write(cjson.encode(data))
+    local _, err = file:seek("cur")
     file:close()
+    if err then
+        return false, err
+    end
     return true
 end
 
