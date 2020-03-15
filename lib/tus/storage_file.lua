@@ -51,7 +51,7 @@ function _M.open(self, resource, offset)
     end
     if self.file then
         self.file:close()
-	self.file = nil
+        self.file = nil
     end
     local file = io.open(self:get_path(resource), "r+b")
     if not file then
@@ -62,9 +62,9 @@ function _M.open(self, resource, offset)
     end
     if offset and offset > 0 and not file:seek("set", offset) then
         file:close()
-	if self.shmlock then
-	    self.shmlock:delete(resource)
-	end
+        if self.shmlock then
+            self.shmlock:delete(resource)
+        end
         return false
     end
     self.file = file
@@ -75,7 +75,7 @@ function _M.close(self, resource)
     local shmlock = self.config["lock_zone"]
     if self.file then
         self.file:close()
-	self.file = nil
+        self.file = nil
     end
     if shmlock then
         shmlock:delete(resource)
@@ -122,7 +122,7 @@ function _M.create(self, resource, data)
     local ret = self:update_info(resource, data)
     if not ret then
         os.remove(self:get_path(resource))
-	return false
+        return false
     end
     return true
 end
