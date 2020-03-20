@@ -4,6 +4,7 @@
 
 local rstring = require "resty.string"
 local tus_version = "1.0.0"
+local ffi = require "ffi"
 
 local _M = {}
 local mt = { __index = _M }
@@ -28,6 +29,24 @@ local config = {
     termination=true
   }
 }
+
+ffi.cdef[[
+    typedef long time_t;
+    typedef int clockid_t;
+
+    typedef struct timespec {
+            time_t   tv_sec;        /* seconds */
+            long     tv_nsec;       /* nanoseconds */
+    } nanotime;
+    int clock_gettime(clockid_t clk_id, struct timespec *tp);
+]]
+
+local function clock_gettime()
+    local n = assert(ffi.new("nanotime[?]", 1))
+    -- CLOCK_REALTIME -> 0
+    ffi.C.clock_gettime(0, n)
+    return n[0]
+end
 
 local function split(s, delimiter)
     local result = {};
@@ -161,8 +180,16 @@ local function check_concat_final(self, concat_final)
     return ret
 end
 
-local function randstring(len, charset)
-    math.randomseed(ngx.time() + ngx.worker.pid())
+local function randseed()
+    local ct = clock_gettime()
+    math.randomseed(tonumber(ct.tv_sec) * 1000000 + tonumber(ct.tv_nsec) + ngx.worker.pid())
+end
+
+local function randstring(self, len, charset)
+    if not self.random_seeded then
+        randseed(self)
+        self.random_seeded = true
+    end
     local res = ""
     local r
     if charset == nil then
@@ -244,11 +271,20 @@ function _M.create_resource(self,i)
         end
 
     else
+        local cnt = 1
         while true do
-            name = randstring(self.config.resource_name_length)
+            if cnt > 8 then
+                ngx.log(ngx.ERR, "Failed to generate resource name")
+                return false
+            end
+            name = randstring(self, self.config.resource_name_length)
             local r = self:resource_info(name)
-            if r == false then return false end
+            if r == false then
+                ngx.log(ngx.ERR, "Error reading resource info: ", name)
+                return false
+            end
             if r == nil then break end
+            cnt = cnt + 1
         end
     end
     local info = {}
